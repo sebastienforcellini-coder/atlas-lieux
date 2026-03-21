@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import type { Lieu, LieuInput } from '@/types'
 import { Stars } from '@/components/UI'
 import { uploadPhoto } from '@/lib/supabase'
+import { compressImage } from '@/lib/imageUtils'
 
 const EMPTY: LieuInput = {
   name: '', country: '', city: '', address: '', description: '',
@@ -98,7 +99,8 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
     setUploading(true)
     const urls: string[] = []
     for (const file of Array.from(files)) {
-      const url = await uploadPhoto(file)
+      const compressed = await compressImage(file)
+      const url = await uploadPhoto(compressed)
       if (url) urls.push(url)
     }
     if (urls.length > 0) up('photos', [...form.photos, ...urls])
@@ -213,7 +215,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
         <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFileUpload(e.target.files)} />
         {uploading
           ? <div style={{ fontSize: 13, color: 'var(--mid)' }}>⏳ Upload en cours…</div>
-          : <div style={{ fontSize: 13, color: 'var(--mid)' }}>📎 Glisser-déposer ou <span style={{ color: 'var(--accent)' }}>cliquer pour uploader</span> des photos</div>
+          : <div style={{ fontSize: 13, color: 'var(--mid)' }}>📎 Glisser-deposer ou <span style={{ color: 'var(--accent)' }}>choisir des photos</span> — compression automatique</div>
         }
       </div>
       {/* URL */}

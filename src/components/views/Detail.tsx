@@ -24,22 +24,37 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://atlas-lieux.vercel.app'
   const shareUrl = origin + '/partager/' + lieu.id
 
-  const handleShareLink = () => {
-    navigator.clipboard?.writeText(shareUrl)
-    onShare('Lien copie dans le presse-papier !')
-  }
-
-  const handleShareText = () => {
+  const buildShareText = () => {
     const parts: string[] = []
-    parts.push('📍 ' + lieu.name)
+    parts.push(lieu.name)
     parts.push(lieu.city + ', ' + lieu.country)
     if (lieu.address) parts.push(lieu.address)
     if (lieu.description) parts.push(lieu.description)
     if (gpsLink) parts.push('GPS : ' + lieu.gps_lat + ', ' + lieu.gps_lng)
     if (lieu.tags?.length) parts.push('Tags : ' + lieu.tags.join(', '))
-    parts.push(shareUrl)
-    navigator.clipboard?.writeText(parts.join('\n'))
-    onShare('Fiche copiee dans le presse-papier !')
+    return parts.join('\n')
+  }
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: lieu.name,
+          text: buildShareText(),
+          url: shareUrl,
+        })
+      } catch {
+        // user cancelled, do nothing
+      }
+    } else {
+      navigator.clipboard?.writeText(shareUrl)
+      onShare('Lien copie dans le presse-papier !')
+    }
+  }
+
+  const handleShareLink = () => {
+    navigator.clipboard?.writeText(shareUrl)
+    onShare('Lien copie dans le presse-papier !')
   }
 
   const handleAddComment = async () => {
@@ -77,8 +92,7 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
           {lieu.rating > 0 && <Stars value={lieu.rating} />}
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', flexShrink: 0 }}>
-          <button className="btn btn-sm" onClick={handleShareLink}>Lien</button>
-          <button className="btn btn-sm" onClick={handleShareText}>Texte</button>
+          <button className="btn btn-sm btn-accent" onClick={handleShare}>Partager</button>
           <button className="btn btn-sm" onClick={() => onNavigate('form', { editLieu: lieu })}>Modifier</button>
           <button className="btn btn-sm btn-danger" onClick={() => onDelete(lieu.id)}>Supprimer</button>
         </div>
