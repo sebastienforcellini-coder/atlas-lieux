@@ -9,10 +9,15 @@ export const metadata: Metadata = {
   title: 'Atlas — Répertoire de lieux',
   description: 'Répertoriez, classez et partagez vos lieux favoris',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/apple-touch-icon.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'Atlas',
+    startupImage: '/apple-touch-icon.png',
   },
 }
 
