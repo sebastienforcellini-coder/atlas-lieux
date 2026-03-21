@@ -303,9 +303,9 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
       )}
 
       <div className="divider" />
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-        <button className="btn" onClick={onCancel}>Annuler</button>
-        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Enregistrement…' : 'Enregistrer'}</button>
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button className="btn" onClick={onCancel} style={{ flex: 1 }}>Annuler</button>
+        <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ flex: 2 }}>{saving ? 'Enregistrement…' : 'Enregistrer'}</button>
       </div>
     </div>
   )
