@@ -4,6 +4,7 @@ import type { Lieu, LieuInput } from '@/types'
 import { Stars } from '@/components/UI'
 import { uploadPhoto } from '@/lib/supabase'
 import { compressImage } from '@/lib/imageUtils'
+import { reverseGeocode } from '@/lib/geocode'
 
 const EMPTY: LieuInput = {
   name: '', country: '', city: '', address: '', description: '',
@@ -98,11 +99,42 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
     if (!files || files.length === 0) return
     setUploading(true)
     const urls: string[] = []
+
     for (const file of Array.from(files)) {
+      // Read EXIF GPS from first photo if GPS not already set
+      if (urls.length === 0 && !form.gps_lat) {
+        try {
+          const exifr = (await import('exifr')).default
+          const gps = await exifr.gps(file)
+          if (gps?.latitude && gps?.longitude) {
+            const lat = gps.latitude.toFixed(6)
+            const lng = gps.longitude.toFixed(6)
+            setGpsInput(lat + ', ' + lng)
+            setForm(f => ({ ...f, gps_lat: lat, gps_lng: lng }))
+
+            // Reverse geocode to fill city/country if empty
+            if (!form.city || !form.country) {
+              const geo = await reverseGeocode(gps.latitude, gps.longitude)
+              setForm(f => ({
+                ...f,
+                gps_lat: lat,
+                gps_lng: lng,
+                city: f.city || geo.city || '',
+                country: f.country || geo.country || '',
+                address: f.address || geo.address || '',
+              }))
+            }
+          }
+        } catch {
+          // EXIF not available, ignore
+        }
+      }
+
       const compressed = await compressImage(file)
       const url = await uploadPhoto(compressed)
       if (url) urls.push(url)
     }
+
     if (urls.length > 0) up('photos', [...form.photos, ...urls])
     setUploading(false)
   }
