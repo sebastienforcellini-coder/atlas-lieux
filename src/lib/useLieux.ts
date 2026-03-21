@@ -26,7 +26,16 @@ export function useLieux() {
 
   const addLieu = useCallback(async (input: LieuInput): Promise<number | null> => {
     const slug = toSlug(input.name, input.city)
-    const { data, error } = await supabase.from(TABLE).insert([{ ...input, slug }]).select().single()
+    const clean = {
+      ...input,
+      slug,
+      visit_date: input.visit_date || null,
+      address: input.address || null,
+      description: input.description || null,
+      gps_lat: input.gps_lat || null,
+      gps_lng: input.gps_lng || null,
+    }
+    const { data, error } = await supabase.from(TABLE).insert([clean]).select().single()
     if (error) {
       console.error('Supabase insert error:', error)
       setError(error.message)
