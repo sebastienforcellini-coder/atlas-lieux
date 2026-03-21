@@ -51,7 +51,7 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
       lieu.description ? lieu.description : '',
       gpsLink ? 'GPS : ' + lieu.gps_lat + ', ' + lieu.gps_lng : '',
       lieu.tags?.length ? 'Tags : ' + lieu.tags.join(', ') : '',
-      '🔗 ' + shareUrl,
+      shareUrl,
     ].filter(Boolean).join('
 ')
     navigator.clipboard?.writeText(lines)
