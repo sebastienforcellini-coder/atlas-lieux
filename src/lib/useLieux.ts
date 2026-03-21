@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
 import { toSlug } from './slug'
+
+function capitalize(s: string): string {
+  if (!s) return s
+  return s.trim().charAt(0).toUpperCase() + s.trim().slice(1).toLowerCase()
+}
+
+function titleCase(s: string): string {
+  if (!s) return s
+  return s.trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+}
 import type { Lieu, LieuInput } from '@/types'
 
 const TABLE = 'lieux'
@@ -29,6 +39,8 @@ export function useLieux() {
     const clean = {
       ...input,
       slug,
+      country: titleCase(input.country),
+      city: titleCase(input.city),
       visit_date: input.visit_date || null,
       address: input.address || null,
       description: input.description || null,
@@ -48,9 +60,12 @@ export function useLieux() {
 
   const updateLieu = useCallback(async (id: number, input: Partial<LieuInput>) => {
     const slug = input.name && input.city ? toSlug(input.name, input.city) : undefined
+    const normalized: Partial<LieuInput> = { ...input }
+    if (input.country) normalized.country = titleCase(input.country)
+    if (input.city) normalized.city = titleCase(input.city)
     const { error } = await supabase
       .from(TABLE)
-      .update({ ...input, ...(slug ? { slug } : {}), updated_at: new Date().toISOString() })
+      .update({ ...normalized, ...(slug ? { slug } : {}), updated_at: new Date().toISOString() })
       .eq('id', id)
     if (error) { setError(error.message); return }
     await fetchAll()
