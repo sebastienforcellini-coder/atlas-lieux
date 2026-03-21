@@ -59,6 +59,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
   const [gpsError, setGpsError] = useState('')
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (initial) {
