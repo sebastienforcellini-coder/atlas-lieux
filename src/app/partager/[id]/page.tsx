@@ -1,21 +1,52 @@
 import { supabase } from '@/lib/supabase'
 import type { Lieu } from '@/types'
+import type { Metadata } from 'next'
 
 interface Props { params: { id: string } }
 
-function starsStr(n: number) { return '★'.repeat(n) + '☆'.repeat(5-n) }
-function fd(d: string | null) { return d ? new Date(d).toLocaleDateString('fr-FR') : '' }
-
-export default async function SharePage({ params }: Props) {
-  const { id } = params
-
-  // Try slug first, then numeric id
+async function getLieu(id: string): Promise<Lieu | null> {
   const isNumeric = /^\d+$/.test(id)
   const { data } = isNumeric
     ? await supabase.from('lieux').select('*').eq('id', id).single()
     : await supabase.from('lieux').select('*').eq('slug', id).single()
+  return data as Lieu | null
+}
 
-  const lieu = data as Lieu | null
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const lieu = await getLieu(params.id)
+  if (!lieu) return { title: 'Lieu introuvable — Atlas' }
+
+  const title = lieu.name + ' — ' + lieu.city + ', ' + lieu.country
+  const description = lieu.description
+    ? lieu.description.slice(0, 160)
+    : lieu.city + ', ' + lieu.country + (lieu.address ? ' · ' + lieu.address : '')
+  const image = lieu.photos?.[0] || null
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: 'https://atlas-lieux.vercel.app/partager/' + (lieu.slug || lieu.id),
+      siteName: 'Atlas — Répertoire de lieux',
+      type: 'article',
+      ...(image ? { images: [{ url: image, width: 1200, height: 630, alt: lieu.name }] } : {}),
+    },
+    twitter: {
+      card: image ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      ...(image ? { images: [image] } : {}),
+    },
+  }
+}
+
+function starsStr(n: number) { return '★'.repeat(n) + '☆'.repeat(5 - n) }
+function fd(d: string | null) { return d ? new Date(d).toLocaleDateString('fr-FR') : '' }
+
+export default async function SharePage({ params }: Props) {
+  const lieu = await getLieu(params.id)
 
   if (!lieu) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F2ED', fontFamily: 'Georgia, serif' }}>
@@ -26,11 +57,13 @@ export default async function SharePage({ params }: Props) {
     </div>
   )
 
-  const gpsLink = lieu.gps_lat && lieu.gps_lng ? 'https://maps.google.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng : null
+  const gpsLink = lieu.gps_lat && lieu.gps_lng
+    ? 'https://maps.google.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng : null
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F2ED', fontFamily: 'Georgia, serif' }}>
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '2rem 1.25rem 4rem' }}>
+
         <div style={{ marginBottom: '1.5rem' }}>
           <div style={{ fontSize: 9, letterSpacing: 2, color: '#B0AA9E', textTransform: 'uppercase', marginBottom: 8 }}>Atlas — Répertoire de lieux</div>
           <h1 style={{ fontSize: '1.8rem', fontStyle: 'italic', fontWeight: 300, lineHeight: 1.2, marginBottom: 6 }}>{lieu.name}</h1>
@@ -41,7 +74,7 @@ export default async function SharePage({ params }: Props) {
         {lieu.photos?.length > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: lieu.photos.length === 1 ? '1fr' : 'repeat(auto-fill,minmax(180px,1fr))', gap: 6, marginBottom: '1.5rem' }}>
             {lieu.photos.map((u: string, i: number) => (
-              <img key={i} src={u} alt="" style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
+              <img key={i} src={u} alt={lieu.name} style={{ width: '100%', height: 220, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
             ))}
           </div>
         )}
@@ -82,16 +115,20 @@ export default async function SharePage({ params }: Props) {
             {lieu.videos.map((u: string, i: number) => {
               const m = u.match(/(?:v=|youtu\.be\/)([^&?]+)/)
               return m ? (
-                <iframe key={i} width="100%" height="240" src={'https://www.youtube.com/embed/' + m[1]}
-                  frameBorder="0" allowFullScreen style={{ borderRadius: 8, border: '1px solid rgba(26,24,20,.1)' }} />
+                <iframe key={i} width="100%" height="240"
+                  src={'https://www.youtube.com/embed/' + m[1]}
+                  frameBorder="0" allowFullScreen
+                  style={{ borderRadius: 8, border: '1px solid rgba(26,24,20,.1)' }} />
               ) : null
             })}
           </div>
         )}
 
-        <div style={{ borderTop: '1px solid rgba(26,24,20,.1)', paddingTop: '1rem', marginTop: '1.5rem', fontSize: 11, color: '#B0AA9E' }}>
-          Partagé depuis Atlas — atlas-lieux.vercel.app
+        <div style={{ borderTop: '1px solid rgba(26,24,20,.1)', paddingTop: '1rem', marginTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 11, color: '#B0AA9E' }}>Partagé depuis Atlas</div>
+          <a href="https://atlas-lieux.vercel.app" style={{ fontSize: 11, color: '#8C5A28', textDecoration: 'none' }}>atlas-lieux.vercel.app →</a>
         </div>
+
       </div>
     </div>
   )
