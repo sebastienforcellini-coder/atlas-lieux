@@ -29,10 +29,9 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
     parts.push(lieu.name)
     parts.push(lieu.city + ', ' + lieu.country)
     if (lieu.address) parts.push(lieu.address)
-    if (lieu.description) parts.push(lieu.description)
-    if (gpsLink) parts.push('GPS : ' + lieu.gps_lat + ', ' + lieu.gps_lng)
-    if (lieu.tags?.length) parts.push('Tags : ' + lieu.tags.join(', '))
-    return parts.join('\n')
+    if (lieu.description) parts.push(lieu.description.slice(0, 200))
+    if (lieu.tags?.length) parts.push(lieu.tags.join(' · '))
+    return parts.filter(Boolean).join('\n')
   }
 
   const handleShare = async () => {
