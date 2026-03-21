@@ -7,6 +7,8 @@ import AllLieux from '@/components/views/AllLieux'
 import { CountryView, CityView } from '@/components/views/CountryCityViews'
 import Detail from '@/components/views/Detail'
 import LieuForm from '@/components/views/LieuForm'
+import GeoForm from '@/components/views/GeoForm'
+import MapView from '@/components/views/MapView'
 import { ConfirmModal, Loading, Toast } from '@/components/UI'
 import type { Lieu, LieuInput, View, NavState } from '@/types'
 
@@ -14,6 +16,7 @@ const VIEW_LABELS: Record<View, string> = {
   home: 'Accueil', all: 'Tous les lieux',
   country: 'Pays', city: 'Ville',
   detail: 'Fiche lieu', form: 'Nouveau lieu',
+  map: 'Carte', geoform: 'Ma position',
 }
 
 export default function AtlasPage() {
@@ -100,12 +103,10 @@ export default function AtlasPage() {
         </div>
 
         <main style={{ flex: 1, overflowY: 'auto', padding: '28px 32px' }}>
-          {nav.view === 'home' && (
-            <Home lieux={lieux} onNavigate={navigate} />
-          )}
-          {nav.view === 'all' && (
-            <AllLieux lieux={lieux} onNavigate={navigate} />
-          )}
+          {nav.view === 'home' && <Home lieux={lieux} onNavigate={navigate} />}
+          {nav.view === 'all' && <AllLieux lieux={lieux} onNavigate={navigate} />}
+          {nav.view === 'map' && <MapView lieux={lieux} onNavigate={navigate} />}
+          {nav.view === 'geoform' && <GeoForm onNavigate={navigate} />}
           {nav.view === 'country' && nav.country && (
             <CountryView country={nav.country} lieux={lieux} onNavigate={navigate} />
           )}

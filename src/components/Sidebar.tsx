@@ -4,14 +4,7 @@ import type { View } from '@/types'
 interface Props {
   current: View
   onNavigate: (v: View, opts?: Record<string, unknown>) => void
-  country?: string
-  city?: string
 }
-
-const NAV = [
-  { view: 'home'   as View, icon: '🗺', label: 'Accueil' },
-  { view: 'all'    as View, icon: '🔍', label: 'Tous les lieux' },
-]
 
 export function Logo() {
   return (
@@ -28,23 +21,22 @@ export default function Sidebar({ current, onNavigate }: Props) {
     <div className="sidebar">
       <Logo />
       <div className="nav-section">Navigation</div>
-      {NAV.map(({ view, icon, label }) => (
-        <button
-          key={view}
-          className={`nav-item${current === view ? ' on' : ''}`}
-          onClick={() => onNavigate(view)}
-        >
-          <span className="nav-icon">{icon}</span>
-          {label}
-        </button>
-      ))}
-      <div className="nav-section" style={{ marginTop: 'auto', paddingTop: 16 }}>Actions</div>
-      <button
-        className="nav-item"
-        onClick={() => onNavigate('form', { editLieu: null })}
-      >
-        <span className="nav-icon">＋</span>
-        Nouveau lieu
+      <button className={`nav-item${current === 'home' ? ' on' : ''}`} onClick={() => onNavigate('home')}>
+        <span className="nav-icon">🗺</span>Accueil
+      </button>
+      <button className={`nav-item${current === 'all' ? ' on' : ''}`} onClick={() => onNavigate('all')}>
+        <span className="nav-icon">🔍</span>Tous les lieux
+      </button>
+      <button className={`nav-item${current === 'map' ? ' on' : ''}`} onClick={() => onNavigate('map')}>
+        <span className="nav-icon">🗾</span>Carte
+      </button>
+
+      <div className="nav-section" style={{ marginTop: 'auto', paddingTop: 16 }}>Ajouter</div>
+      <button className="nav-item" onClick={() => onNavigate('form', { editLieu: null })}>
+        <span className="nav-icon">✏️</span>Nouveau lieu
+      </button>
+      <button className="nav-item" onClick={() => onNavigate('geoform')}>
+        <span className="nav-icon">📍</span>Depuis ma position
       </button>
     </div>
   )

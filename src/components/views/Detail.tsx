@@ -35,15 +35,25 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
     await onUpdate(lieu.id, { comments: cmts.filter(c => c.id !== cid) })
   }
 
+  const shareUrl = (typeof window !== 'undefined' ? window.location.origin : 'https://atlas-lieux.vercel.app') + '/partager/' + lieu.id
+
   const handleShare = () => {
+    const url = shareUrl
+    navigator.clipboard?.writeText(url)
+    onShare('Lien de partage copié !')
+  }
+
+  const handleShareText = () => {
     const lines = [
-      `📍 ${lieu.name}`,
-      `${lieu.city}, ${lieu.country}`,
+      '📍 ' + lieu.name,
+      lieu.city + ', ' + lieu.country,
       lieu.address ?? '',
-      lieu.description ? `\n${lieu.description}` : '',
-      gpsLink ? `\nGPS : ${lieu.gps_lat}, ${lieu.gps_lng}\n${gpsLink}` : '',
-      lieu.tags?.length ? `\nTags : ${lieu.tags.join(', ')}` : '',
-    ].filter(Boolean).join('\n')
+      lieu.description ? lieu.description : '',
+      gpsLink ? 'GPS : ' + lieu.gps_lat + ', ' + lieu.gps_lng : '',
+      lieu.tags?.length ? 'Tags : ' + lieu.tags.join(', ') : '',
+      '🔗 ' + shareUrl,
+    ].filter(Boolean).join('
+')
     navigator.clipboard?.writeText(lines)
     onShare('Fiche copiée dans le presse-papier !')
   }
@@ -69,7 +79,10 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
           {lieu.rating > 0 && <Stars value={lieu.rating} />}
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', flexShrink: 0 }}>
-          <button className="btn btn-sm" onClick={handleShare}>Partager</button>
+          <>
+          <button className="btn btn-sm" onClick={handleShare}>🔗 Lien</button>
+          <button className="btn btn-sm" onClick={handleShareText}>📋 Texte</button>
+        </>
           <button className="btn btn-sm" onClick={() => onNavigate('form', { editLieu: lieu })}>Modifier</button>
           <button className="btn btn-sm btn-danger" onClick={() => onDelete(lieu.id)}>Supprimer</button>
         </div>

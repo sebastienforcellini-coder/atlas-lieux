@@ -1,7 +1,8 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { Lieu, LieuInput } from '@/types'
 import { Stars } from '@/components/UI'
+import { uploadPhoto } from '@/lib/supabase'
 
 const EMPTY: LieuInput = {
   name: '', country: '', city: '', address: '', description: '',
@@ -53,6 +54,8 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
   const [gpsInput, setGpsInput] = useState('')
   const [gpsLocating, setGpsLocating] = useState(false)
   const [gpsError, setGpsError] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (initial) {
@@ -70,11 +73,8 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
     setGpsInput(val)
     setGpsError('')
     const parsed = parseGpsString(val)
-    if (parsed) {
-      setForm(f => ({ ...f, gps_lat: parsed.lat, gps_lng: parsed.lng }))
-    } else if (val.trim()) {
-      setForm(f => ({ ...f, gps_lat: '', gps_lng: '' }))
-    }
+    if (parsed) setForm(f => ({ ...f, gps_lat: parsed.lat, gps_lng: parsed.lng }))
+    else if (val.trim()) setForm(f => ({ ...f, gps_lat: '', gps_lng: '' }))
   }
 
   const handleGeolocate = () => {
@@ -91,6 +91,18 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
       (err) => { setGpsError('Position indisponible : ' + err.message); setGpsLocating(false) },
       { enableHighAccuracy: true, timeout: 10000 }
     )
+  }
+
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    setUploading(true)
+    const urls: string[] = []
+    for (const file of Array.from(files)) {
+      const url = await uploadPhoto(file)
+      if (url) urls.push(url)
+    }
+    if (urls.length > 0) up('photos', [...form.photos, ...urls])
+    setUploading(false)
   }
 
   const addPhoto = () => { const v = newPhoto.trim(); if (!v) return; up('photos', [...form.photos, v]); setNewPhoto('') }
@@ -187,10 +199,27 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
         </div>
       </div>
 
-      <Section title="Photos (URLs)" />
+      <Section title="Photos" />
+      {/* Upload */}
+      <div
+        onClick={() => fileRef.current?.click()}
+        style={{
+          border: '2px dashed var(--line2)', borderRadius: 8, padding: '16px', textAlign: 'center',
+          cursor: 'pointer', marginBottom: 10, transition: 'border-color .15s', background: 'var(--bg)',
+        }}
+        onDragOver={e => e.preventDefault()}
+        onDrop={e => { e.preventDefault(); handleFileUpload(e.dataTransfer.files) }}
+      >
+        <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFileUpload(e.target.files)} />
+        {uploading
+          ? <div style={{ fontSize: 13, color: 'var(--mid)' }}>⏳ Upload en cours…</div>
+          : <div style={{ fontSize: 13, color: 'var(--mid)' }}>📎 Glisser-déposer ou <span style={{ color: 'var(--accent)' }}>cliquer pour uploader</span> des photos</div>
+        }
+      </div>
+      {/* URL */}
       <div className="photo-input-row">
         <input className="field-input" value={newPhoto} onChange={e => setNewPhoto(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addPhoto())} placeholder="https://example.com/photo.jpg" />
+          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addPhoto())} placeholder="ou coller une URL : https://example.com/photo.jpg" />
         <button className="btn btn-sm" type="button" onClick={addPhoto}>Ajouter</button>
       </div>
       {form.photos.length > 0 && (
