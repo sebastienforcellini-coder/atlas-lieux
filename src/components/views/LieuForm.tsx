@@ -8,7 +8,7 @@ import { compressImage } from '@/lib/imageUtils'
 const EMPTY: LieuInput = {
   name: '', country: '', city: '', address: '', description: '',
   photos: [], videos: [], tags: [], gps_lat: '', gps_lng: '',
-  rating: 0, visit_date: '', comments: [],
+  rating: 0, visit_date: '', comments: [], slug: null,
 }
 
 interface Props {
