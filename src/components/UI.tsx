@@ -7,7 +7,7 @@ export const ytEmbed = (u: string) => {
   const m = u.match(/(?:v=|youtu\.be\/)([^&?]+)/)
   return m ? `https://www.youtube.com/embed/${m[1]}` : null
 }
-export const uniq = <T,>(arr: T[]):  T[] => Array.from(new Set(arr))
+export const uniq = <T,>(arr: T[]): T[] => Array.from(new Set(arr))
 export const plural = (n: number, s: string, p?: string) => `${n} ${n > 1 ? (p ?? s + 's') : s}`
 export const gid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5)
 

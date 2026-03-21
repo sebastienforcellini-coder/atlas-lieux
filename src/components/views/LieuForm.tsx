@@ -63,8 +63,8 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
     setSaving(false)
   }
 
-  const existingCountries = Array.from(new Set(allLieux.map(l => l.country).sort())
-  const existingCities    = Array.from(new Set(allLieux.map(l => l.city).sort())
+  const existingCountries = Array.from(new Set(allLieux.map(l => l.country))).sort()
+  const existingCities    = Array.from(new Set(allLieux.map(l => l.city))).sort()
 
   return (
     <div style={{ maxWidth: 700 }}>
