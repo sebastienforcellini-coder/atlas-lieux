@@ -16,6 +16,25 @@ export interface Lieu {
   visit_date: string | null
   comments: Comment[]
   slug: string | null
+  categorie: string
+  favori: boolean
+}
+
+export const CATEGORIES: { id: string; label: string; icon: string }[] = [
+  { id: 'restaurant', label: 'Restaurant',  icon: '🍽' },
+  { id: 'cafe',       label: 'Café / Bar',  icon: '☕' },
+  { id: 'hotel',      label: 'Hôtel / Riad',icon: '🏨' },
+  { id: 'musee',      label: 'Musée / Art',  icon: '🏛' },
+  { id: 'nature',     label: 'Nature',       icon: '🌿' },
+  { id: 'plage',      label: 'Plage',        icon: '🏖' },
+  { id: 'shop',       label: 'Shopping',     icon: '🛍' },
+  { id: 'sport',      label: 'Sport',        icon: '⚽' },
+  { id: 'monument',   label: 'Monument',     icon: '🏛' },
+  { id: 'autre',      label: 'Autre',        icon: '📍' },
+]
+
+export function getCat(id: string) {
+  return CATEGORIES.find(c => c.id === id) ?? CATEGORIES[CATEGORIES.length - 1]
 }
 
 export interface Comment {
@@ -26,7 +45,7 @@ export interface Comment {
 
 export type LieuInput = Omit<Lieu, 'id' | 'created_at' | 'updated_at'>
 
-export type View = 'home' | 'all' | 'country' | 'city' | 'detail' | 'form' | 'map' | 'geoform'
+export type View = 'home' | 'all' | 'country' | 'city' | 'detail' | 'form' | 'map' | 'geoform' | 'favoris'
 
 export interface NavState {
   view: View

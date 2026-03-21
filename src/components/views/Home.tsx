@@ -2,6 +2,7 @@
 import type { Lieu, View } from '@/types'
 import { useState } from 'react'
 import { uniq, plural, Stars, TagsDisplay } from '@/components/UI'
+import { getCat, CATEGORIES } from '@/types'
 
 interface Props {
   lieux: Lieu[]
@@ -92,11 +93,22 @@ export default function Home({ lieux, onNavigate }: Props) {
 }
 
 export function LieuCard({ lieu, onClick }: { lieu: Lieu; onClick: () => void }) {
+  const cat = getCat(lieu.categorie)
   return (
     <div className="place-card" onClick={onClick}>
-      {lieu.photos?.[0]
-        ? <img className="card-img" src={lieu.photos[0]} alt="" onError={e => (e.target as HTMLImageElement).style.opacity='.15'} />
-        : <div className="card-img-ph">Pas de photo</div>}
+      <div style={{ position: 'relative' }}>
+        {lieu.photos?.[0]
+          ? <img className="card-img" src={lieu.photos[0]} alt="" onError={e => (e.target as HTMLImageElement).style.opacity='.15'} />
+          : <div className="card-img-ph">{cat.icon}</div>}
+        <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(253,252,250,.92)', borderRadius: 100, padding: '2px 8px', fontSize: 11, color: 'var(--mid)', display: 'flex', alignItems: 'center', gap: 3 }}>
+          {cat.icon} {cat.label}
+        </div>
+        {lieu.favori && (
+          <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(253,252,250,.92)', borderRadius: 100, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#E0952A' }}>
+            ★
+          </div>
+        )}
+      </div>
       <div className="card-body">
         <div className="card-name">{lieu.name}</div>
         <div className="card-sub">{lieu.city} · {lieu.country}</div>

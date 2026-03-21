@@ -8,6 +8,7 @@ import { CountryView, CityView } from '@/components/views/CountryCityViews'
 import Detail from '@/components/views/Detail'
 import LieuForm from '@/components/views/LieuForm'
 import GeoForm from '@/components/views/GeoForm'
+import Favoris from '@/components/views/Favoris'
 import MapView from '@/components/views/MapView'
 import { ConfirmModal, Loading, Toast } from '@/components/UI'
 import type { Lieu, LieuInput, View, NavState } from '@/types'
@@ -16,7 +17,7 @@ const VIEW_LABELS: Record<View, string> = {
   home: 'Accueil', all: 'Tous les lieux',
   country: 'Pays', city: 'Ville',
   detail: 'Fiche lieu', form: 'Nouveau lieu',
-  map: 'Carte', geoform: 'Ma position',
+  map: 'Carte', geoform: 'Ma position', favoris: 'Favoris',
 }
 
 export default function AtlasPage() {
@@ -81,7 +82,7 @@ export default function AtlasPage() {
       <div className="mobile-topbar">
         <button
           onClick={() => setMenuOpen(true)}
-          style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 4, color: 'var(--mid)', padding: '6px 10px', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}
+          style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 8, color: 'var(--mid)', padding: '8px 12px', cursor: 'pointer', fontSize: 18, lineHeight: 1, minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >☰</button>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontFamily: 'Georgia, serif', fontSize: 15, fontStyle: 'italic', color: 'var(--text)', lineHeight: 1.1 }}>Atlas</div>
@@ -106,6 +107,7 @@ export default function AtlasPage() {
           {nav.view === 'home' && <Home lieux={lieux} onNavigate={navigate} />}
           {nav.view === 'all' && <AllLieux lieux={lieux} onNavigate={navigate} />}
           {nav.view === 'map' && <MapView lieux={lieux} onNavigate={navigate} />}
+          {nav.view === 'favoris' && <Favoris lieux={lieux} onNavigate={navigate} />}
           {nav.view === 'geoform' && <GeoForm onNavigate={navigate} />}
           {nav.view === 'country' && nav.country && (
             <CountryView country={nav.country} lieux={lieux} onNavigate={navigate} />

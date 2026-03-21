@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import type { Lieu, View } from '@/types'
 import { Stars, Lightbox, fd, ytEmbed, gid } from '@/components/UI'
+import { getCat } from '@/types'
 
 interface Props {
   lieu: Lieu
@@ -70,6 +71,12 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
     await onUpdate(lieu.id, { comments: cmts.filter(c => c.id !== cid) })
   }
 
+  const handleToggleFavori = async () => {
+    await onUpdate(lieu.id, { favori: !lieu.favori })
+  }
+
+  const cat = getCat(lieu.categorie)
+
   return (
     <div>
       {lb !== null && <Lightbox photos={lieu.photos} index={lb} onClose={() => setLb(null)} />}
@@ -86,11 +93,23 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
 
       <div className="page-header">
         <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <span style={{ background: 'var(--accent-bg)', color: 'var(--accent)', padding: '2px 10px', borderRadius: 100, fontSize: 11 }}>
+              {cat.icon} {cat.label}
+            </span>
+          </div>
           <div className="serif" style={{ fontSize: 24, fontStyle: 'italic', fontWeight: 300, marginBottom: 4 }}>{lieu.name}</div>
           <p style={{ fontSize: 13, color: 'var(--mid)', marginBottom: 6 }}>{lieu.city} · {lieu.country}</p>
           {lieu.rating > 0 && <Stars value={lieu.rating} />}
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', flexShrink: 0 }}>
+          <button
+            className="btn btn-sm"
+            onClick={handleToggleFavori}
+            style={{ color: lieu.favori ? '#E0952A' : 'var(--mid)', borderColor: lieu.favori ? '#E0952A' : undefined }}
+          >
+            {lieu.favori ? '★ Favori' : '☆ Favori'}
+          </button>
           <button className="btn btn-sm btn-accent" onClick={handleShare}>Partager</button>
           <button className="btn btn-sm" onClick={() => onNavigate('form', { editLieu: lieu })}>Modifier</button>
           <button className="btn btn-sm btn-danger" onClick={() => onDelete(lieu.id)}>Supprimer</button>

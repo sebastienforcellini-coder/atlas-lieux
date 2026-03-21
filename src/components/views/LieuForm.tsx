@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Lieu, LieuInput } from '@/types'
 import { Stars } from '@/components/UI'
+import { CATEGORIES } from '@/types'
 import { uploadPhoto } from '@/lib/supabase'
 import { compressImage } from '@/lib/imageUtils'
 import { reverseGeocode } from '@/lib/geocode'
@@ -9,7 +10,7 @@ import { reverseGeocode } from '@/lib/geocode'
 const EMPTY: LieuInput = {
   name: '', country: '', city: '', address: '', description: '',
   photos: [], videos: [], tags: [], gps_lat: '', gps_lng: '',
-  rating: 0, visit_date: '', comments: [], slug: null,
+  rating: 0, visit_date: '', comments: [], slug: null, categorie: 'autre', favori: false,
 }
 
 interface Props {
@@ -188,6 +189,59 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
           <div className="label">Description / Notes</div>
           <textarea className="field-input" value={form.description ?? ''} onChange={e => up('description', e.target.value)}
             placeholder="Impressions, recommandations, horaires, prix…" rows={5} style={{ resize: 'vertical' }} />
+        </div>
+      </div>
+
+      <Section title="Type de lieu & favori" />
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <div className="label">Catégorie</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+            {CATEGORIES.map(c => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => up('categorie', c.id)}
+                style={{
+                  padding: '5px 10px',
+                  borderRadius: 100,
+                  border: '1px solid',
+                  borderColor: form.categorie === c.id ? 'var(--accent)' : 'var(--line2)',
+                  background: form.categorie === c.id ? 'var(--accent-bg)' : 'var(--bg)',
+                  color: form.categorie === c.id ? 'var(--accent)' : 'var(--mid)',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  transition: 'all .15s',
+                }}
+              >
+                {c.icon} {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="label">Favori</div>
+          <button
+            type="button"
+            onClick={() => up('favori', !form.favori)}
+            style={{
+              marginTop: 4,
+              padding: '6px 14px',
+              borderRadius: 100,
+              border: '1px solid',
+              borderColor: form.favori ? '#E0952A' : 'var(--line2)',
+              background: form.favori ? '#FFF8EC' : 'var(--bg)',
+              color: form.favori ? '#E0952A' : 'var(--mid)',
+              fontSize: 13,
+              cursor: 'pointer',
+              transition: 'all .15s',
+            }}
+          >
+            {form.favori ? '★ Favori' : '☆ Ajouter aux favoris'}
+          </button>
         </div>
       </div>
 

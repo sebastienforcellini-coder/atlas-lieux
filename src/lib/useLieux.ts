@@ -22,7 +22,9 @@ function normalize(row: Record<string, unknown>): Lieu {
     videos:   Array.isArray(row.videos)   ? row.videos   : [],
     tags:     Array.isArray(row.tags)     ? row.tags     : [],
     comments: Array.isArray(row.comments) ? row.comments : [],
-    rating:   typeof row.rating === 'number' ? row.rating : 0,
+    rating:    typeof row.rating === 'number' ? row.rating : 0,
+    categorie: typeof row.categorie === 'string' ? row.categorie : 'autre',
+    favori:    typeof row.favori === 'boolean' ? row.favori : false,
   } as Lieu
 }
 
@@ -89,6 +91,8 @@ export function useLieux() {
       description: input.description || null,
       gps_lat: input.gps_lat || null,
       gps_lng: input.gps_lng || null,
+      categorie: input.categorie || 'autre',
+      favori: input.favori ?? false,
     }
     const { data, error } = await supabase.from(TABLE).insert([clean]).select().single()
     if (error) {
