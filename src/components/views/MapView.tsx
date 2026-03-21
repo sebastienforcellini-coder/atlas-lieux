@@ -89,8 +89,9 @@ export default function MapView({ lieux, onNavigate }: Props) {
       <div className="page-header">
         <div>
           <div className="serif" style={{ fontSize: 22, fontStyle: 'italic', fontWeight: 300, marginBottom: 3 }}>Carte</div>
-          <div style={{ fontSize: 12, color: 'var(--soft)' }}>{withGps.length} lieu{withGps.length !== 1 ? 'x' : ''} géolocalisé{withGps.length !== 1 ? 's' : ''} sur {lieux.length}</div>
+          <div style={{ fontSize: 12, color: 'var(--soft)' }}>{withGps.length} lieu{withGps.length !== 1 ? 'x' : ''} géolocalise sur {lieux.length}</div>
         </div>
+        <button className="btn btn-sm" onClick={() => onNavigate('home')}>← Retour</button>
       </div>
 
       {withGps.length === 0 ? (
