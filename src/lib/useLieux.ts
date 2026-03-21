@@ -1,6 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from './supabase'
 import { toSlug } from './slug'
+import type { Lieu, LieuInput } from '@/types'
+
+const TABLE = 'lieux'
 
 function capitalize(s: string): string {
   if (!s) return s
@@ -11,17 +14,25 @@ function titleCase(s: string): string {
   if (!s) return s
   return s.trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
 }
-import type { Lieu, LieuInput } from '@/types'
 
-const TABLE = 'lieux'
+function normalize(row: Record<string, unknown>): Lieu {
+  return {
+    ...row,
+    photos:   Array.isArray(row.photos)   ? row.photos   : [],
+    videos:   Array.isArray(row.videos)   ? row.videos   : [],
+    tags:     Array.isArray(row.tags)     ? row.tags     : [],
+    comments: Array.isArray(row.comments) ? row.comments : [],
+    rating:   typeof row.rating === 'number' ? row.rating : 0,
+  } as Lieu
+}
 
 export function useLieux() {
   const [lieux, setLieux] = useState<Lieu[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   const fetchAll = useCallback(async () => {
-    setLoading(true)
     const { data, error } = await supabase
       .from(TABLE)
       .select('*')
@@ -32,7 +43,39 @@ export function useLieux() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { fetchAll() }, [fetchAll])
+  useEffect(() => {
+    fetchAll()
+
+    // Realtime subscription
+    const channel = supabase
+      .channel('lieux-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: TABLE },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setLieux(prev => [normalize(payload.new as Record<string, unknown>), ...prev])
+          } else if (payload.eventType === 'UPDATE') {
+            setLieux(prev => prev.map(l =>
+              l.id === (payload.new as { id: number }).id
+                ? normalize(payload.new as Record<string, unknown>)
+                : l
+            ))
+          } else if (payload.eventType === 'DELETE') {
+            setLieux(prev => prev.filter(l => l.id !== (payload.old as { id: number }).id))
+          }
+        }
+      )
+      .subscribe()
+
+    channelRef.current = channel
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+      }
+    }
+  }, [fetchAll])
 
   const addLieu = useCallback(async (input: LieuInput): Promise<number | null> => {
     const slug = toSlug(input.name, input.city)
@@ -54,38 +97,32 @@ export function useLieux() {
       alert('Erreur Supabase : ' + error.message)
       return null
     }
-    await fetchAll()
+    // Realtime will update state automatically
     return data.id
-  }, [fetchAll])
+  }, [])
 
   const updateLieu = useCallback(async (id: number, input: Partial<LieuInput>) => {
     const slug = input.name && input.city ? toSlug(input.name, input.city) : undefined
     const normalized: Partial<LieuInput> = { ...input }
     if (input.country) normalized.country = titleCase(input.country)
     if (input.city) normalized.city = titleCase(input.city)
+    if (input.visit_date === '') normalized.visit_date = null
+    if (input.address === '') normalized.address = null
+    if (input.gps_lat === '') normalized.gps_lat = null
+    if (input.gps_lng === '') normalized.gps_lng = null
+
     const { error } = await supabase
       .from(TABLE)
       .update({ ...normalized, ...(slug ? { slug } : {}), updated_at: new Date().toISOString() })
       .eq('id', id)
     if (error) { setError(error.message); return }
-    await fetchAll()
-  }, [fetchAll])
+    // Realtime will update state automatically
+  }, [])
 
   const deleteLieu = useCallback(async (id: number) => {
     await supabase.from(TABLE).delete().eq('id', id)
-    setLieux(prev => prev.filter(l => l.id !== id))
+    // Realtime will update state automatically
   }, [])
 
   return { lieux, loading, error, addLieu, updateLieu, deleteLieu, refetch: fetchAll }
-}
-
-function normalize(row: Record<string, unknown>): Lieu {
-  return {
-    ...row,
-    photos:   Array.isArray(row.photos)   ? row.photos   : [],
-    videos:   Array.isArray(row.videos)   ? row.videos   : [],
-    tags:     Array.isArray(row.tags)     ? row.tags     : [],
-    comments: Array.isArray(row.comments) ? row.comments : [],
-    rating:   typeof row.rating === 'number' ? row.rating : 0,
-  } as Lieu
 }
