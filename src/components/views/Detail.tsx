@@ -12,8 +12,87 @@ interface Props {
   onShare: (msg: string) => void
 }
 
+function GpsMenu({ lat, lng, onClose }: { lat: string; lng: string; onClose: () => void }) {
+  const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent)
+  const isAndroid = typeof navigator !== 'undefined' && /Android/.test(navigator.userAgent)
+
+  const apps = [
+    {
+      name: 'Google Maps',
+      icon: '🗺',
+      url: `https://maps.google.com/?q=${lat},${lng}`,
+      platforms: ['ios', 'android', 'desktop'],
+    },
+    {
+      name: 'Plans',
+      icon: '🍎',
+      url: `https://maps.apple.com/?q=${lat},${lng}&ll=${lat},${lng}`,
+      platforms: ['ios', 'desktop'],
+    },
+    {
+      name: 'Waze',
+      icon: '🚗',
+      url: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`,
+      platforms: ['ios', 'android'],
+    },
+    {
+      name: 'Maps.me',
+      icon: '🌍',
+      url: `https://maps.me/?ll=${lat},${lng}&z=16`,
+      platforms: ['android'],
+    },
+  ]
+
+  const platform = isIOS ? 'ios' : isAndroid ? 'android' : 'desktop'
+  const filtered = apps.filter(a => a.platforms.includes(platform))
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(26,24,20,.5)', zIndex: 500, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background: 'var(--white)', borderRadius: '16px 16px 0 0', padding: '16px 16px 32px', width: '100%', maxWidth: 480 }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ width: 36, height: 4, background: 'var(--line2)', borderRadius: 2, margin: '0 auto 16px' }} />
+        <div style={{ fontSize: 12, color: 'var(--soft)', textAlign: 'center', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
+          Ouvrir avec
+        </div>
+        {filtered.map(app => (
+          <a
+            key={app.name}
+            href={app.url}
+            target="_blank"
+            rel="noopener"
+            onClick={onClose}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 14,
+              padding: '14px 16px', borderRadius: 10,
+              textDecoration: 'none', color: 'var(--text)',
+              border: '1px solid var(--line)', marginBottom: 8,
+              background: 'var(--bg)', transition: 'background .15s',
+              fontSize: 15,
+            }}
+          >
+            <span style={{ fontSize: 24 }}>{app.icon}</span>
+            <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontWeight: 300 }}>{app.name}</span>
+            <span style={{ marginLeft: 'auto', color: 'var(--soft)', fontSize: 12 }}>→</span>
+          </a>
+        ))}
+        <button
+          onClick={onClose}
+          style={{ width: '100%', padding: '12px', border: '1px solid var(--line2)', borderRadius: 10, background: 'var(--bg)', color: 'var(--mid)', cursor: 'pointer', fontSize: 14, marginTop: 4 }}
+        >
+          Annuler
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }: Props) {
   const [tab, setTab] = useState<'info' | 'media' | 'cmt'>('info')
+  const [showGpsMenu, setShowGpsMenu] = useState(false)
   const [lb, setLb] = useState<number | null>(null)
   const [newComment, setNewComment] = useState('')
   const [saving, setSaving] = useState(false)
@@ -79,6 +158,9 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
 
   return (
     <div>
+      {showGpsMenu && lieu.gps_lat && lieu.gps_lng && (
+        <GpsMenu lat={lieu.gps_lat} lng={lieu.gps_lng} onClose={() => setShowGpsMenu(false)} />
+      )}
       {lb !== null && <Lightbox photos={lieu.photos} index={lb} onClose={() => setLb(null)} />}
 
       <nav className="bc">
@@ -142,9 +224,13 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
           )}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
             {gpsLink && (
-              <a className="pill" href={gpsLink} target="_blank" rel="noopener">
-                📍 {parseFloat(lieu.gps_lat!).toFixed(5)}, {parseFloat(lieu.gps_lng!).toFixed(5)} → Maps
-              </a>
+              <button
+                className="pill"
+                onClick={() => setShowGpsMenu(true)}
+                style={{ cursor: 'pointer', border: '1px solid var(--line2)', background: 'var(--white)' }}
+              >
+                📍 {parseFloat(lieu.gps_lat!).toFixed(5)}, {parseFloat(lieu.gps_lng!).toFixed(5)} → Navigation
+              </button>
             )}
             {lieu.visit_date && <span className="pill">🗓 Visite le {fd(lieu.visit_date)}</span>}
             {lieu.address && <span className="pill">🏠 {lieu.address}</span>}
