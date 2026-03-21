@@ -8,7 +8,8 @@ interface Props {
 
 export function Logo() {
   return (
-    <div className="sidebar-logo">
+    <div className="sidebar-logo" style={{ padding: '16px 20px 14px', textAlign: 'center' }}>
+      <img src="/favicon.svg" alt="Atlas" style={{ width: 48, height: 48, marginBottom: 8, display: 'block', margin: '0 auto 8px' }} />
       <div className="sidebar-logo-title serif">Atlas</div>
       <div className="sidebar-logo-line" />
       <div className="sidebar-logo-sub">RÉPERTOIRE DE LIEUX</div>
