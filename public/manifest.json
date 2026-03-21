@@ -1,0 +1,13 @@
+{
+  "name": "Atlas — Répertoire de lieux",
+  "short_name": "Atlas",
+  "description": "Répertoriez, classez et partagez vos lieux favoris",
+  "theme_color": "#8C5A28",
+  "background_color": "#F5F2ED",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
