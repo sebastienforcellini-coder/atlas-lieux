@@ -104,16 +104,16 @@ export default function AtlasPage() {
         </div>
 
         <main style={{ flex: 1, overflowY: 'auto', padding: '28px 32px' }}>
-          {nav.view === 'home' && <Home lieux={lieux} onNavigate={navigate} />}
-          {nav.view === 'all' && <AllLieux lieux={lieux} onNavigate={navigate} />}
+          {nav.view === 'home' && <Home lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
+          {nav.view === 'all' && <AllLieux lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
           {nav.view === 'map' && <MapView lieux={lieux} onNavigate={navigate} />}
-          {nav.view === 'favoris' && <Favoris lieux={lieux} onNavigate={navigate} />}
+          {nav.view === 'favoris' && <Favoris lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
           {nav.view === 'geoform' && <GeoForm onNavigate={navigate} />}
           {nav.view === 'country' && nav.country && (
-            <CountryView country={nav.country} lieux={lieux} onNavigate={navigate} />
+            <CountryView country={nav.country} lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />
           )}
           {nav.view === 'city' && nav.country && nav.city && (
-            <CityView country={nav.country} city={nav.city} lieux={lieux} onNavigate={navigate} />
+            <CityView country={nav.country} city={nav.city} lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />
           )}
           {nav.view === 'detail' && currentLieu && (
             <Detail

@@ -7,9 +7,10 @@ import { getCat, CATEGORIES } from '@/types'
 interface Props {
   lieux: Lieu[]
   onNavigate: (v: View, opts?: Record<string, unknown>) => void
+  onDelete: (id: number) => void
 }
 
-export default function Home({ lieux, onNavigate }: Props) {
+export default function Home({ lieux, onNavigate, onDelete }: Props) {
   const [tab, setTab] = useState<'pays' | 'villes' | 'recent'>('pays')
 
   const countries = uniq(lieux.map(l => l.country)).sort()
@@ -92,7 +93,7 @@ export default function Home({ lieux, onNavigate }: Props) {
   )
 }
 
-export function LieuCard({ lieu, onClick }: { lieu: Lieu; onClick: () => void }) {
+export function LieuCard({ lieu, onClick, onDelete }: { lieu: Lieu; onClick: () => void; onDelete?: (id: number) => void }) {
   const cat = getCat(lieu.categorie)
   return (
     <div className="place-card" onClick={onClick}>
@@ -107,6 +108,20 @@ export function LieuCard({ lieu, onClick }: { lieu: Lieu; onClick: () => void })
           <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(253,252,250,.92)', borderRadius: 100, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#E0952A' }}>
             ★
           </div>
+        )}
+        {onDelete && (
+          <button
+            onClick={e => { e.stopPropagation(); if (confirm('Supprimer "' + lieu.name + '" ?')) onDelete(lieu.id) }}
+            style={{
+              position: 'absolute', bottom: 8, right: 8,
+              background: 'rgba(253,252,250,.92)', border: 'none',
+              borderRadius: 100, width: 26, height: 26,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, color: '#C0392B', cursor: 'pointer',
+              fontWeight: 600, lineHeight: 1,
+            }}
+            title="Supprimer"
+          >✕</button>
         )}
       </div>
       <div className="card-body">

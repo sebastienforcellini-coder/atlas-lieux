@@ -7,9 +7,10 @@ interface CountryProps {
   country: string
   lieux: Lieu[]
   onNavigate: (v: View, opts?: Record<string, unknown>) => void
+  onDelete: (id: number) => void
 }
 
-export function CountryView({ country, lieux, onNavigate }: CountryProps) {
+export function CountryView({ country, lieux, onNavigate, onDelete }: CountryProps) {
   const cities = uniq(lieux.filter(l => l.country === country).map(l => l.city)).sort()
 
   return (
@@ -42,9 +43,10 @@ interface CityProps {
   city: string
   lieux: Lieu[]
   onNavigate: (v: View, opts?: Record<string, unknown>) => void
+  onDelete: (id: number) => void
 }
 
-export function CityView({ country, city, lieux, onNavigate }: CityProps) {
+export function CityView({ country, city, lieux, onNavigate, onDelete }: CityProps) {
   const filtered = lieux.filter(l => l.country === country && l.city === city)
 
   return (
@@ -62,7 +64,7 @@ export function CityView({ country, city, lieux, onNavigate }: CityProps) {
       {filtered.length === 0
         ? <div className="empty-state"><div>Aucun lieu dans cette ville.</div></div>
         : <div className="grid-cards">
-            {filtered.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} />)}
+            {filtered.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} onDelete={onDelete} />)}
           </div>
       }
     </div>

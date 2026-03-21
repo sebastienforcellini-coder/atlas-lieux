@@ -7,9 +7,10 @@ import { LieuCard } from './Home'
 interface Props {
   lieux: Lieu[]
   onNavigate: (v: View, opts?: Record<string, unknown>) => void
+  onDelete: (id: number) => void
 }
 
-export default function AllLieux({ lieux, onNavigate }: Props) {
+export default function AllLieux({ lieux, onNavigate, onDelete }: Props) {
   const [q, setQ] = useState('')
   const [catFilter, setCatFilter] = useState('')
   const [favoriOnly, setFavoriOnly] = useState(false)
@@ -75,7 +76,7 @@ export default function AllLieux({ lieux, onNavigate }: Props) {
       {filtered.length === 0
         ? <div className="empty-state"><div>Aucun résultat{q ? ` pour "${q}"` : ''}</div></div>
         : <div className="grid-cards">
-            {filtered.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} />)}
+            {filtered.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} onDelete={onDelete} />)}
           </div>
       }
     </div>

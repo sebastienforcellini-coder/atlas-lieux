@@ -5,9 +5,10 @@ import { LieuCard } from './Home'
 interface Props {
   lieux: Lieu[]
   onNavigate: (v: View, opts?: Record<string, unknown>) => void
+  onDelete: (id: number) => void
 }
 
-export default function Favoris({ lieux, onNavigate }: Props) {
+export default function Favoris({ lieux, onNavigate, onDelete }: Props) {
   const favoris = lieux.filter(l => l.favori)
 
   return (
@@ -26,7 +27,7 @@ export default function Favoris({ lieux, onNavigate }: Props) {
         </div>
       ) : (
         <div className="grid-cards">
-          {favoris.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} />)}
+          {favoris.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} onDelete={onDelete} />)}
         </div>
       )}
     </div>
