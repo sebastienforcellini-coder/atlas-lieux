@@ -205,8 +205,9 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
       {/* Upload */}
       <div
         onClick={() => fileRef.current?.click()}
+        className="photo-upload-zone"
         style={{
-          border: '2px dashed var(--line2)', borderRadius: 8, padding: '16px', textAlign: 'center',
+          border: '2px dashed var(--line2)', borderRadius: 8, padding: '20px 16px', textAlign: 'center',
           cursor: 'pointer', marginBottom: 10, transition: 'border-color .15s', background: 'var(--bg)',
         }}
         onDragOver={e => e.preventDefault()}
@@ -214,8 +215,12 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
       >
         <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleFileUpload(e.target.files)} />
         {uploading
-          ? <div style={{ fontSize: 13, color: 'var(--mid)' }}>⏳ Upload en cours…</div>
-          : <div style={{ fontSize: 13, color: 'var(--mid)' }}>📎 Glisser-deposer ou <span style={{ color: 'var(--accent)' }}>choisir des photos</span> — compression automatique</div>
+          ? <div style={{ fontSize: 14, color: 'var(--mid)' }}>⏳ Compression et upload en cours...</div>
+          : <div style={{ fontSize: 14, color: 'var(--mid)' }}>
+              <div style={{ fontSize: 22, marginBottom: 6 }}>📷</div>
+              <div><span style={{ color: 'var(--accent)', fontWeight: 500 }}>Choisir des photos</span></div>
+              <div style={{ fontSize: 11, marginTop: 4, color: 'var(--soft)' }}>Depuis la galerie ou appareil photo · Compression automatique</div>
+            </div>
         }
       </div>
       {/* URL */}
