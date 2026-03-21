@@ -22,7 +22,7 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
     ? 'https://maps.google.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng : null
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://atlas-lieux.vercel.app'
-  const shareUrl = origin + '/partager/' + lieu.id
+  const shareUrl = origin + '/partager/' + (lieu.slug || lieu.id)
 
   const buildShareText = () => {
     const parts: string[] = []

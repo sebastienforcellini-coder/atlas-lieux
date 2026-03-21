@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
+import { toSlug } from './slug'
 import type { Lieu, LieuInput } from '@/types'
 
 const TABLE = 'lieux'
@@ -24,7 +25,8 @@ export function useLieux() {
   useEffect(() => { fetchAll() }, [fetchAll])
 
   const addLieu = useCallback(async (input: LieuInput): Promise<number | null> => {
-    const { data, error } = await supabase.from(TABLE).insert([input]).select().single()
+    const slug = toSlug(input.name, input.city)
+    const { data, error } = await supabase.from(TABLE).insert([{ ...input, slug }]).select().single()
     if (error) {
       console.error('Supabase insert error:', error)
       setError(error.message)
@@ -36,9 +38,10 @@ export function useLieux() {
   }, [fetchAll])
 
   const updateLieu = useCallback(async (id: number, input: Partial<LieuInput>) => {
+    const slug = input.name && input.city ? toSlug(input.name, input.city) : undefined
     const { error } = await supabase
       .from(TABLE)
-      .update({ ...input, updated_at: new Date().toISOString() })
+      .update({ ...input, ...(slug ? { slug } : {}), updated_at: new Date().toISOString() })
       .eq('id', id)
     if (error) { setError(error.message); return }
     await fetchAll()

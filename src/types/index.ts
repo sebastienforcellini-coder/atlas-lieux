@@ -15,6 +15,7 @@ export interface Lieu {
   rating: number
   visit_date: string | null
   comments: Comment[]
+  slug: string | null
 }
 
 export interface Comment {
