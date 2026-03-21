@@ -19,8 +19,9 @@ export function Logo() {
 
 export default function Sidebar({ current, onNavigate }: Props) {
   return (
-    <div className="sidebar">
+    <div className="sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Logo />
+
       <div className="nav-section">Navigation</div>
       <button className={`nav-item${current === 'home' ? ' on' : ''}`} onClick={() => onNavigate('home')}>
         <span className="nav-icon">🗺</span>Accueil
@@ -32,13 +33,24 @@ export default function Sidebar({ current, onNavigate }: Props) {
         <span className="nav-icon">🗾</span>Carte
       </button>
 
-      <div className="nav-section" style={{ marginTop: 'auto', paddingTop: 16 }}>Ajouter</div>
-      <button className="nav-item" onClick={() => onNavigate('form', { editLieu: null })}>
-        <span className="nav-icon">✏️</span>Nouveau lieu
+      <div style={{ height: 1, background: 'var(--line)', margin: '12px 20px' }} />
+
+      <div className="nav-section">Créer</div>
+      <button
+        className={`nav-item${current === 'form' ? ' on' : ''}`}
+        onClick={() => onNavigate('form', { editLieu: null })}
+        style={{ color: 'var(--accent)' }}
+      >
+        <span className="nav-icon">＋</span>Nouvelle fiche
       </button>
-      <button className="nav-item" onClick={() => onNavigate('geoform')}>
+      <button
+        className={`nav-item${current === 'geoform' ? ' on' : ''}`}
+        onClick={() => onNavigate('geoform')}
+      >
         <span className="nav-icon">📍</span>Depuis ma position
       </button>
+
+      <div style={{ flex: 1 }} />
     </div>
   )
 }

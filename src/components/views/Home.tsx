@@ -22,14 +22,12 @@ export default function Home({ lieux, onNavigate }: Props) {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <div className="serif" style={{ fontSize: 22, fontStyle: 'italic', fontWeight: 300, marginBottom: 3 }}>Votre Atlas</div>
-          <div style={{ fontSize: 12, color: 'var(--soft)' }}>Répertoire personnel de lieux</div>
-        </div>
-        <button className="btn btn-accent btn-sm" onClick={() => onNavigate('form', { editLieu: null })}>
-          + Nouveau lieu
-        </button>
+      {/* Hero logo — visible mobile et desktop */}
+      <div style={{ textAlign: 'center', padding: '2rem 0 1.5rem', borderBottom: '1px solid var(--line)', marginBottom: '1.5rem' }}>
+        <img src="/favicon.svg" alt="Atlas" style={{ width: 72, height: 72, margin: '0 auto 12px', display: 'block' }} />
+        <div className="serif" style={{ fontSize: 32, fontStyle: 'italic', fontWeight: 300, color: 'var(--text)', lineHeight: 1 }}>Atlas</div>
+        <div style={{ height: 1, background: 'var(--accent)', opacity: 0.4, margin: '6px auto', width: 40 }} />
+        <div style={{ fontSize: 9, color: 'var(--soft)', letterSpacing: 3, fontFamily: 'Georgia, serif' }}>RÉPERTOIRE DE LIEUX</div>
       </div>
 
       {/* Stats */}
