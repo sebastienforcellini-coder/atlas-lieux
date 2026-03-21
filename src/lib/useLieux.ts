@@ -25,7 +25,12 @@ export function useLieux() {
 
   const addLieu = useCallback(async (input: LieuInput): Promise<number | null> => {
     const { data, error } = await supabase.from(TABLE).insert([input]).select().single()
-    if (error) { setError(error.message); return null }
+    if (error) {
+      console.error('Supabase insert error:', error)
+      setError(error.message)
+      alert('Erreur Supabase : ' + error.message)
+      return null
+    }
     await fetchAll()
     return data.id
   }, [fetchAll])
