@@ -58,6 +58,9 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
   const [gpsLocating, setGpsLocating] = useState(false)
   const [gpsError, setGpsError] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importUrl, setImportUrl] = useState('')
+  const [showImport, setShowImport] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
 
@@ -141,6 +144,42 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
     setUploading(false)
   }
 
+  const handleImport = async () => {
+    const url = importUrl.trim()
+    if (!url) return
+    setImporting(true)
+    try {
+      const res = await fetch('/api/import-lieu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      })
+      const data = await res.json()
+      if (data.error) { alert('Erreur : ' + data.error); return }
+      const l = data.lieu
+      setForm(f => ({
+        ...f,
+        name: l.name || f.name,
+        country: l.country || f.country,
+        city: l.city || f.city,
+        address: l.address || f.address,
+        description: l.description || f.description,
+        categorie: l.categorie || f.categorie,
+        tags: l.tags?.length ? l.tags : f.tags,
+        gps_lat: l.gps_lat || f.gps_lat,
+        gps_lng: l.gps_lng || f.gps_lng,
+        videos: url ? [...f.videos.filter(v => v !== url), url] : f.videos,
+      }))
+      if (l.gps_lat && l.gps_lng) setGpsInput(l.gps_lat + ', ' + l.gps_lng)
+      setShowImport(false)
+      setImportUrl('')
+    } catch {
+      alert('Erreur lors de l import')
+    } finally {
+      setImporting(false)
+    }
+  }
+
   const addPhoto = () => { const v = newPhoto.trim(); if (!v) return; up('photos', [...form.photos, v]); setNewPhoto('') }
   const addLink = () => { const v = newLink.trim(); if (!v) return; up('videos', [...form.videos, v]); setNewLink('') }
   const addTag = () => { const v = newTag.trim(); if (!v || form.tags.includes(v)) return; up('tags', [...form.tags, v]); setNewTag('') }
@@ -165,7 +204,42 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
         <div className="serif" style={{ fontSize: 22, fontStyle: 'italic', fontWeight: 300 }}>
           {isEdit ? 'Modifier — ' + form.name : 'Nouveau lieu'}
         </div>
+        {!isEdit && (
+          <button className="btn btn-sm" type="button" onClick={() => setShowImport(s => !s)}>
+            🔗 Importer depuis un lien
+          </button>
+        )}
       </div>
+
+      {showImport && (
+        <div style={{ background: 'var(--accent-bg)', border: '1px solid var(--accent)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+          <div style={{ fontSize: 12, color: 'var(--accent)', marginBottom: 8, fontWeight: 500 }}>
+            🤖 Colle un lien et Claude remplira la fiche automatiquement
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--mid)', marginBottom: 10 }}>
+            Fonctionne avec : TripAdvisor, Google Maps, sites de restaurants, hotels, musees…
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              className="field-input"
+              value={importUrl}
+              onChange={e => setImportUrl(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleImport())}
+              placeholder="https://www.tripadvisor.fr/Restaurant_Review-..."
+              style={{ flex: 1 }}
+            />
+            <button
+              className="btn btn-accent btn-sm"
+              type="button"
+              onClick={handleImport}
+              disabled={importing || !importUrl.trim()}
+              style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+            >
+              {importing ? '⏳ Analyse...' : '✨ Importer'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid-2col" style={{ gap: 12 }}>
         <div style={{ gridColumn: '1/-1' }}>
