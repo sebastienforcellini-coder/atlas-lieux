@@ -4,13 +4,12 @@ export async function POST(req: NextRequest) {
   const { url } = await req.json()
   if (!url) return NextResponse.json({ error: 'URL manquante' }, { status: 400 })
 
-  const prompt = `Tu dois extraire les informations d'un lieu depuis cette URL : ${url}
+  // Try to extract GPS from Google Maps URL directly
+  const gmapsMatch = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
 
-INSTRUCTIONS :
-1. Visite la page web via web_search ou en analysant l'URL
-2. Pour les coordonnées GPS : cherche dans l'URL elle-meme (Google Maps contient souvent @lat,lng), dans les meta tags, ou cherche le nom du lieu sur Google Maps pour trouver les coordonnées exactes
-3. Pour un lien Google Maps comme "maps.google.com/.../@43.2965,5.3698..." extrais directement lat/lng de l'URL
-4. Pour TripAdvisor, cherche le nom + ville sur Google Maps pour obtenir les coordonnées
+  const prompt = `Extrait les informations de ce lieu depuis cette URL : ${url}
+
+${gmapsMatch ? `COORDONNEES GPS TROUVEES DANS L URL : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]} — utilise-les directement.` : `Pour les coordonnees GPS : cherche le nom du lieu + ville sur Google Maps ou dans les donnees de la page.`}
 
 Reponds UNIQUEMENT avec un JSON valide (sans markdown, sans backticks) :
 {
@@ -21,11 +20,9 @@ Reponds UNIQUEMENT avec un JSON valide (sans markdown, sans backticks) :
   "description": "description 2-3 phrases ou null",
   "categorie": "restaurant|cafe|hotel|musee|nature|plage|shop|sport|monument|autre",
   "tags": ["tag1", "tag2"],
-  "gps_lat": "latitude en decimal ex: 43.296482 ou null",
-  "gps_lng": "longitude en decimal ex: 5.381001 ou null"
-}
-
-IMPORTANT : Fais tout ton possible pour trouver les coordonnées GPS. Si le lien est Google Maps, elles sont dans l URL. Sinon cherche le lieu par son nom et ville.`
+  "gps_lat": "${gmapsMatch ? gmapsMatch[1] : 'latitude decimale ou null'}",
+  "gps_lng": "${gmapsMatch ? gmapsMatch[2] : 'longitude decimale ou null'}"
+}`
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -34,19 +31,16 @@ IMPORTANT : Fais tout ton possible pour trouver les coordonnées GPS. Si le lien
         'Content-Type': 'application/json',
         'x-api-key': process.env.ANTHROPIC_API_KEY!,
         'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'interleaved-thinking-2025-05-14',
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 2048,
-        thinking: { type: 'enabled', budget_tokens: 512 },
+        max_tokens: 1024,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: prompt }],
       }),
     })
 
     const data = await response.json()
-    console.log('API response:', JSON.stringify(data).slice(0, 500))
 
     const text = data.content
       ?.filter((b: { type: string }) => b.type === 'text')
@@ -55,6 +49,13 @@ IMPORTANT : Fais tout ton possible pour trouver les coordonnées GPS. Si le lien
 
     const clean = text.replace(/```json|```/g, '').trim()
     const lieu = JSON.parse(clean)
+
+    // Inject GPS from URL if Claude missed it
+    if (gmapsMatch && !lieu.gps_lat) {
+      lieu.gps_lat = gmapsMatch[1]
+      lieu.gps_lng = gmapsMatch[2]
+    }
+
     return NextResponse.json({ lieu })
   } catch (e) {
     console.error('Import error:', e)
