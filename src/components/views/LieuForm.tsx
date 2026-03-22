@@ -281,7 +281,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
               value={importUrl}
               onChange={e => setImportUrl(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleImport())}
-              placeholder="https://www.tripadvisor.fr/Restaurant_Review-..."
+              placeholder="https://maps.app.goo.gl/... ou site officiel..."
               style={{ flex: 1 }}
             />
             <button
@@ -293,6 +293,24 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
             >
               {importing ? '⏳ Analyse...' : '✨ Importer'}
             </button>
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <a
+              href={`https://maps.google.com/search/?q=${encodeURIComponent(form.name || form.city || '')}`}
+              target="_blank"
+              rel="noopener"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '6px 12px', borderRadius: 8, fontSize: 12,
+                border: '1px solid var(--line2)', background: 'var(--bg)',
+                color: 'var(--mid)', textDecoration: 'none',
+              }}
+            >
+              🗺 Chercher sur Google Maps
+            </a>
+            <div style={{ fontSize: 11, color: 'var(--soft)', alignSelf: 'center' }}>
+              → Partager → copier le lien → coller ici
+            </div>
           </div>
         </div>
       )}
