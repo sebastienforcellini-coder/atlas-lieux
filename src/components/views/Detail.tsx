@@ -210,7 +210,7 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
       <div className="tab-row">
         {([
           ['info', 'Infos'],
-          ['media', 'Medias'],
+          ['media', 'Liens'],
           ['cmt', 'Commentaires' + (cmts.length ? ' (' + cmts.length + ')' : '')],
         ] as const).map(([k, l]) => (
           <button key={k} className={'tab' + (tab === k ? ' on' : '')} onClick={() => setTab(k)}>{l}</button>
@@ -252,14 +252,23 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
       {tab === 'media' && (
         <div>
           {!lieu.videos?.length
-            ? <div className="empty-state"><div>Aucune video ajoutee</div></div>
-            : <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            ? <div className="empty-state"><div>Aucun lien ajouté</div></div>
+            : <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {lieu.videos.map((u, i) => {
                   const em = ytEmbed(u)
+                  const domain = (() => { try { return new URL(u).hostname.replace('www.', '') } catch { return u } })()
                   return em
                     ? <iframe key={i} width="100%" height="240" src={em} frameBorder="0" allowFullScreen
                         style={{ borderRadius: 8, border: '1px solid var(--line)' }} />
-                    : <a key={i} className="pill" href={u} target="_blank" rel="noopener" style={{ display: 'inline-flex' }}>{u}</a>
+                    : <a key={i} href={u} target="_blank" rel="noopener"
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'var(--bg2)', borderRadius: 10, border: '1px solid var(--line)', textDecoration: 'none', color: 'var(--text)' }}>
+                        <span style={{ fontSize: 20 }}>🔗</span>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--accent)' }}>{domain}</div>
+                          <div style={{ fontSize: 11, color: 'var(--soft)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 280 }}>{u}</div>
+                        </div>
+                        <span style={{ marginLeft: 'auto', color: 'var(--soft)', fontSize: 12 }}>→</span>
+                      </a>
                 })}
               </div>
           }

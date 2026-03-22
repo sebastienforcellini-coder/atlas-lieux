@@ -51,7 +51,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
   const isEdit = !!(initial && 'id' in initial && initial.id)
   const [form, setForm] = useState<LieuInput>({ ...EMPTY })
   const [newPhoto, setNewPhoto] = useState('')
-  const [newVideo, setNewVideo] = useState('')
+  const [newLink, setNewLink] = useState('')
   const [newTag, setNewTag] = useState('')
   const [saving, setSaving] = useState(false)
   const [gpsInput, setGpsInput] = useState('')
@@ -142,7 +142,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
   }
 
   const addPhoto = () => { const v = newPhoto.trim(); if (!v) return; up('photos', [...form.photos, v]); setNewPhoto('') }
-  const addVideo = () => { const v = newVideo.trim(); if (!v) return; up('videos', [...form.videos, v]); setNewVideo('') }
+  const addLink = () => { const v = newLink.trim(); if (!v) return; up('videos', [...form.videos, v]); setNewLink('') }
   const addTag = () => { const v = newTag.trim(); if (!v || form.tags.includes(v)) return; up('tags', [...form.tags, v]); setNewTag('') }
 
   const handleSave = async () => {
@@ -327,11 +327,11 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
         </div>
       )}
 
-      <Section title="Vidéos YouTube" />
+      <Section title="Liens web" />
       <div className="photo-input-row">
-        <input className="field-input" value={newVideo} onChange={e => setNewVideo(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addVideo())} placeholder="https://youtube.com/watch?v=…" />
-        <button className="btn btn-sm" type="button" onClick={addVideo}>Ajouter</button>
+        <input className="field-input" value={newLink} onChange={e => setNewLink(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addLink())} placeholder="https://restaurant.com, tripadvisor.com, youtube.com..." />
+        <button className="btn btn-sm" type="button" onClick={addLink}>Ajouter</button>
       </div>
       {form.videos.map((u, i) => (
         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: '1px solid var(--line)', fontSize: 12, color: 'var(--mid)' }}>
