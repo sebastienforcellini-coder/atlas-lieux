@@ -9,6 +9,7 @@ import Detail from '@/components/views/Detail'
 import LieuForm from '@/components/views/LieuForm'
 import GeoForm from '@/components/views/GeoForm'
 import Favoris from '@/components/views/Favoris'
+import Collections from '@/components/views/Collections'
 import MapView from '@/components/views/MapView'
 import { ConfirmModal, Loading, Toast } from '@/components/UI'
 import type { Lieu, LieuInput, View, NavState } from '@/types'
@@ -17,7 +18,7 @@ const VIEW_LABELS: Record<View, string> = {
   home: 'Accueil', all: 'Tous les lieux',
   country: 'Pays', city: 'Ville',
   detail: 'Fiche lieu', form: 'Nouveau lieu',
-  map: 'Carte', geoform: 'Ma position', favoris: 'Favoris',
+  map: 'Carte', geoform: 'Ma position', favoris: 'Favoris', collections: 'Collections',
 }
 
 export default function AtlasPage() {
@@ -109,6 +110,7 @@ export default function AtlasPage() {
           {nav.view === 'all' && <AllLieux lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
           {nav.view === 'map' && <MapView lieux={lieux} onNavigate={navigate} />}
           {nav.view === 'favoris' && <Favoris lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
+          {nav.view === 'collections' && <Collections lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
           {nav.view === 'geoform' && <GeoForm onNavigate={navigate} />}
           {nav.view === 'country' && nav.country && (
             <CountryView country={nav.country} lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />

@@ -36,6 +36,9 @@ export default function Sidebar({ current, onNavigate }: Props) {
       <button className={`nav-item${current === 'map' ? ' on' : ''}`} onClick={() => onNavigate('map')}>
         <span className="nav-icon">🗾</span>Carte
       </button>
+      <button className={`nav-item${current === 'collections' ? ' on' : ''}`} onClick={() => onNavigate('collections' as View)}>
+        <span className="nav-icon">📚</span>Collections
+      </button>
 
       <div style={{ height: 1, background: 'var(--line)', margin: '12px 20px' }} />
 
