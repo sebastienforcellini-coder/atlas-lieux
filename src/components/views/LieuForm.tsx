@@ -144,6 +144,8 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
     setUploading(false)
   }
 
+  const [importPreview, setImportPreview] = useState<Record<string, unknown> | null>(null)
+
   const handleImport = async () => {
     const url = importUrl.trim()
     if (!url) return
@@ -156,28 +158,35 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
       })
       const data = await res.json()
       if (data.error) { alert('Erreur : ' + data.error); return }
-      const l = data.lieu
-      setForm(f => ({
-        ...f,
-        name: l.name || f.name,
-        country: l.country || f.country,
-        city: l.city || f.city,
-        address: l.address || f.address,
-        description: l.description || f.description,
-        categorie: l.categorie || f.categorie,
-        tags: l.tags?.length ? l.tags : f.tags,
-        gps_lat: l.gps_lat || f.gps_lat,
-        gps_lng: l.gps_lng || f.gps_lng,
-        videos: url ? [...f.videos.filter(v => v !== url), url] : f.videos,
-      }))
-      if (l.gps_lat && l.gps_lng) setGpsInput(l.gps_lat + ', ' + l.gps_lng)
-      setShowImport(false)
-      setImportUrl('')
+      setImportPreview({ ...data.lieu, _url: url })
     } catch {
       alert('Erreur lors de l import')
     } finally {
       setImporting(false)
     }
+  }
+
+  const applyImport = (overwrite: boolean) => {
+    if (!importPreview) return
+    const l = importPreview as Record<string, string | string[]>
+    const url = l._url as string
+    setForm(f => ({
+      ...f,
+      name:        (overwrite && l.name)        ? l.name as string        : l.name as string || f.name,
+      country:     (overwrite && l.country)     ? l.country as string     : l.country as string || f.country,
+      city:        (overwrite && l.city)        ? l.city as string        : l.city as string || f.city,
+      address:     (overwrite && l.address)     ? l.address as string     : l.address as string || f.address,
+      description: (overwrite && l.description) ? l.description as string : l.description as string || f.description,
+      categorie:   (overwrite && l.categorie)   ? l.categorie as string   : l.categorie as string || f.categorie,
+      tags:        (overwrite && (l.tags as string[])?.length) ? l.tags as string[] : (l.tags as string[])?.length ? l.tags as string[] : f.tags,
+      gps_lat:     (overwrite && l.gps_lat)     ? l.gps_lat as string     : l.gps_lat as string || f.gps_lat,
+      gps_lng:     (overwrite && l.gps_lng)     ? l.gps_lng as string     : l.gps_lng as string || f.gps_lng,
+      videos: url ? [...f.videos.filter(v => v !== url), url] : f.videos,
+    }))
+    if (l.gps_lat && l.gps_lng) setGpsInput(l.gps_lat + ', ' + l.gps_lng)
+    setImportPreview(null)
+    setShowImport(false)
+    setImportUrl('')
   }
 
   const addPhoto = () => { const v = newPhoto.trim(); if (!v) return; up('photos', [...form.photos, v]); setNewPhoto('') }
@@ -210,6 +219,53 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
           </button>
         )}
       </div>
+
+      {importPreview && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,24,20,.6)', zIndex: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: 'var(--white)', borderRadius: 16, padding: 20, width: '100%', maxWidth: 480, maxHeight: '80vh', overflowY: 'auto' }}>
+            <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>Aperçu de l import</div>
+            <div style={{ fontSize: 11, color: 'var(--soft)', marginBottom: 14 }}>Les champs en vert seront ajoutés. Choisis comment appliquer.</div>
+            {[
+              ['Nom', 'name'], ['Pays', 'country'], ['Ville', 'city'],
+              ['Adresse', 'address'], ['Description', 'description'],
+              ['Catégorie', 'categorie'], ['GPS', 'gps_lat'],
+            ].map(([label, key]) => {
+              const imported = key === 'gps_lat'
+                ? (importPreview.gps_lat && importPreview.gps_lng ? importPreview.gps_lat + ', ' + importPreview.gps_lng : null)
+                : importPreview[key]
+              const current = key === 'gps_lat'
+                ? (form.gps_lat && form.gps_lng ? form.gps_lat + ', ' + form.gps_lng : null)
+                : form[key as keyof typeof form]
+              if (!imported) return null
+              return (
+                <div key={key} style={{ padding: '8px 10px', borderRadius: 8, marginBottom: 6, background: current ? 'var(--bg2)' : '#F0FBF0', border: '1px solid', borderColor: current ? 'var(--line)' : '#86EFAC' }}>
+                  <div style={{ fontSize: 10, color: 'var(--soft)', marginBottom: 2, textTransform: 'uppercase', letterSpacing: 1 }}>{label}</div>
+                  {current && String(current) !== String(imported) && (
+                    <div style={{ fontSize: 11, color: 'var(--soft)', textDecoration: 'line-through', marginBottom: 2 }}>{String(current)}</div>
+                  )}
+                  <div style={{ fontSize: 13, color: current ? 'var(--text)' : '#15803D' }}>{String(imported)}</div>
+                </div>
+              )
+            })}
+            {(importPreview.tags as string[])?.length > 0 && (
+              <div style={{ padding: '8px 10px', borderRadius: 8, marginBottom: 6, background: '#F0FBF0', border: '1px solid #86EFAC' }}>
+                <div style={{ fontSize: 10, color: 'var(--soft)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>Tags</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {(importPreview.tags as string[]).map(t => <span key={t} style={{ padding: '2px 8px', background: '#DCFCE7', borderRadius: 100, fontSize: 11, color: '#15803D' }}>{t}</span>)}
+                </div>
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+              <button className="btn" style={{ flex: 1 }} onClick={() => setImportPreview(null)}>Annuler</button>
+              <button className="btn" style={{ flex: 1 }} onClick={() => applyImport(false)}>Compléter seulement</button>
+              <button className="btn btn-accent" style={{ flex: 1 }} onClick={() => applyImport(true)}>Tout remplacer</button>
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--soft)', marginTop: 8, textAlign: 'center' }}>
+              Compléter = ne touche pas aux champs déjà remplis · Remplacer = écrase tout
+            </div>
+          </div>
+        </div>
+      )}
 
       {showImport && (
         <div style={{ background: 'var(--accent-bg)', border: '1px solid var(--accent)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
