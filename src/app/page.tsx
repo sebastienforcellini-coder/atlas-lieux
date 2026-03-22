@@ -58,7 +58,8 @@ export default function AtlasPage() {
     await deleteLieu(confirmDelete)
     setConfirmDelete(null)
     showToast('Lieu supprimé.')
-    navigate('home')
+    // Si on est sur la fiche du lieu supprimé, retour arrière — sinon on reste sur la même vue
+    if (nav.view === 'detail' && nav.lieuId === confirmDelete) navigate('home')
   }
 
   const currentLieu = nav.lieuId ? lieux.find(l => l.id === nav.lieuId) : null
