@@ -61,6 +61,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
   const [importing, setImporting] = useState(false)
   const [importUrl, setImportUrl] = useState('')
   const [showImport, setShowImport] = useState(false)
+  const [importMode, setImportMode] = useState<'name' | 'url'>('name')
   const fileRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
 
@@ -154,7 +155,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
       const res = await fetch('/api/import-lieu', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify(importMode === 'name' ? { query: url } : { url }),
       })
       const data = await res.json()
       if (data.error) { alert('Erreur : ' + data.error); return }
@@ -272,46 +273,57 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
           <div style={{ fontSize: 12, color: 'var(--accent)', marginBottom: 8, fontWeight: 500 }}>
             🤖 Colle un lien et Claude remplira la fiche automatiquement
           </div>
-          <div style={{ fontSize: 11, color: 'var(--mid)', marginBottom: 10 }}>
-            Fonctionne avec : TripAdvisor, Google Maps, sites de restaurants, hotels, musees…
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input
-              className="field-input"
-              value={importUrl}
-              onChange={e => setImportUrl(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleImport())}
-              placeholder="https://maps.app.goo.gl/... ou site officiel..."
-              style={{ flex: 1 }}
-            />
-            <button
-              className="btn btn-accent btn-sm"
-              type="button"
-              onClick={handleImport}
-              disabled={importing || !importUrl.trim()}
-              style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-            >
-              {importing ? '⏳ Analyse...' : '✨ Importer'}
+            {/* Toggle mode */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+            <button type="button" onClick={() => setImportMode('name')}
+              style={{ flex: 1, padding: '6px', borderRadius: 8, fontSize: 12, cursor: 'pointer', border: '1px solid', borderColor: importMode === 'name' ? 'var(--accent)' : 'var(--line2)', background: importMode === 'name' ? 'var(--accent-bg)' : 'var(--bg)', color: importMode === 'name' ? 'var(--accent)' : 'var(--mid)' }}>
+              🔍 Par nom
+            </button>
+            <button type="button" onClick={() => setImportMode('url')}
+              style={{ flex: 1, padding: '6px', borderRadius: 8, fontSize: 12, cursor: 'pointer', border: '1px solid', borderColor: importMode === 'url' ? 'var(--accent)' : 'var(--line2)', background: importMode === 'url' ? 'var(--accent-bg)' : 'var(--bg)', color: importMode === 'url' ? 'var(--accent)' : 'var(--mid)' }}>
+              🔗 Par lien
             </button>
           </div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <a
-              href={`https://maps.google.com/search/?q=${encodeURIComponent(form.name || form.city || '')}`}
-              target="_blank"
-              rel="noopener"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '6px 12px', borderRadius: 8, fontSize: 12,
-                border: '1px solid var(--line2)', background: 'var(--bg)',
-                color: 'var(--mid)', textDecoration: 'none',
-              }}
-            >
-              🗺 Chercher sur Google Maps
-            </a>
-            <div style={{ fontSize: 11, color: 'var(--soft)', alignSelf: 'center' }}>
-              → Partager → copier le lien → coller ici
+
+          {importMode === 'name' ? (
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--mid)', marginBottom: 8 }}>
+                Tape le nom + ville et Claude trouve tout automatiquement (GPS inclus)
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input className="field-input" value={importUrl} onChange={e => setImportUrl(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleImport())}
+                  placeholder="ex: Restaurant Mizaan Marrakech" style={{ flex: 1 }} />
+                <button className="btn btn-accent btn-sm" type="button" onClick={handleImport}
+                  disabled={importing || !importUrl.trim()} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  {importing ? '⏳...' : '✨ Chercher'}
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--mid)', marginBottom: 8 }}>
+                Colle un lien Google Maps, TripAdvisor ou site officiel
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input className="field-input" value={importUrl} onChange={e => setImportUrl(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleImport())}
+                  placeholder="https://maps.google.com/..." style={{ flex: 1 }} />
+                <button className="btn btn-accent btn-sm" type="button" onClick={handleImport}
+                  disabled={importing || !importUrl.trim()} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  {importing ? '⏳...' : '✨ Importer'}
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <a href={`https://maps.google.com/search/?q=${encodeURIComponent(form.name || form.city || '')}`}
+                  target="_blank" rel="noopener"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, fontSize: 12, border: '1px solid var(--line2)', background: 'var(--bg)', color: 'var(--mid)', textDecoration: 'none' }}>
+                  🗺 Ouvrir Google Maps
+                </a>
+                <div style={{ fontSize: 11, color: 'var(--soft)', alignSelf: 'center' }}>→ Partager → copier le lien</div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

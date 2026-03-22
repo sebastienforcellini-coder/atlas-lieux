@@ -1,28 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
-  const { url } = await req.json()
-  if (!url) return NextResponse.json({ error: 'URL manquante' }, { status: 400 })
+  const { url, query } = await req.json()
 
-  // Try to extract GPS from Google Maps URL directly
-  const gmapsMatch = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+  // Extract GPS from Google Maps URL if present
+  const gmapsMatch = url?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
 
-  const prompt = `Extrait les informations de ce lieu depuis cette URL : ${url}
+  const prompt = query
+    ? `Recherche ce lieu et extrait toutes ses informations : "${query}"
 
-${gmapsMatch ? `COORDONNEES GPS TROUVEES DANS L URL : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]} — utilise-les directement.` : `Pour les coordonnees GPS : cherche le nom du lieu + ville sur Google Maps ou dans les donnees de la page.`}
+Cherche sur Google Maps, TripAdvisor, ou tout autre source pour trouver :
+- Le nom exact
+- L'adresse complète
+- La ville et le pays
+- Les coordonnées GPS précises (OBLIGATOIRE — cherche sur Google Maps)
+- Une description
+- La catégorie (restaurant/cafe/hotel/musee/nature/plage/shop/sport/monument/autre)
+- Des tags pertinents`
+    : `Extrait les informations de ce lieu depuis cette URL : ${url}
+${gmapsMatch ? `COORDONNEES GPS dans l URL : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : 'Cherche les coordonnées GPS du lieu sur Google Maps.'}`
+
+  const fullPrompt = `${prompt}
 
 Reponds UNIQUEMENT avec un JSON valide (sans markdown, sans backticks) :
 {
-  "name": "nom exact du lieu",
+  "name": "nom exact",
   "country": "pays en francais avec majuscule",
   "city": "ville avec majuscule",
   "address": "adresse complete ou null",
-  "description": "description 2-3 phrases ou null",
+  "description": "2-3 phrases ou null",
   "categorie": "restaurant|cafe|hotel|musee|nature|plage|shop|sport|monument|autre",
   "tags": ["tag1", "tag2"],
-  "gps_lat": "${gmapsMatch ? gmapsMatch[1] : 'latitude decimale ou null'}",
-  "gps_lng": "${gmapsMatch ? gmapsMatch[2] : 'longitude decimale ou null'}"
-}`
+  "gps_lat": "latitude decimale ex: 31.629490 ou null",
+  "gps_lng": "longitude decimale ex: -7.981710 ou null"
+}
+
+IMPORTANT : Pour les coordonnees GPS, fais une recherche Google Maps du lieu pour les obtenir. C est obligatoire.`
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -36,12 +49,11 @@ Reponds UNIQUEMENT avec un JSON valide (sans markdown, sans backticks) :
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1024,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: 'user', content: fullPrompt }],
       }),
     })
 
     const data = await response.json()
-
     const text = data.content
       ?.filter((b: { type: string }) => b.type === 'text')
       ?.map((b: { text: string }) => b.text)
@@ -50,7 +62,6 @@ Reponds UNIQUEMENT avec un JSON valide (sans markdown, sans backticks) :
     const clean = text.replace(/```json|```/g, '').trim()
     const lieu = JSON.parse(clean)
 
-    // Inject GPS from URL if Claude missed it
     if (gmapsMatch && !lieu.gps_lat) {
       lieu.gps_lat = gmapsMatch[1]
       lieu.gps_lng = gmapsMatch[2]
@@ -59,6 +70,6 @@ Reponds UNIQUEMENT avec un JSON valide (sans markdown, sans backticks) :
     return NextResponse.json({ lieu })
   } catch (e) {
     console.error('Import error:', e)
-    return NextResponse.json({ error: 'Impossible d analyser ce lien' }, { status: 500 })
+    return NextResponse.json({ error: 'Impossible d analyser ce lieu' }, { status: 500 })
   }
 }
