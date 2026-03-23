@@ -59,6 +59,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
   const [gpsError, setGpsError] = useState('')
   const [uploading, setUploading] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [importStep, setImportStep] = useState('')
   const [importUrl, setImportUrl] = useState('')
   const [showImport, setShowImport] = useState(false)
   const [importMode, setImportMode] = useState<'name' | 'url'>('name')
@@ -151,6 +152,15 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
     const url = importUrl.trim()
     if (!url) return
     setImporting(true)
+    const steps = importMode === 'name'
+      ? ['🔍 Recherche du lieu...', '🌐 Consultation des sources...', '📍 Récupération des coordonnées GPS...', '✨ Préparation de la fiche...']
+      : ['🌐 Lecture de la page...', '📊 Extraction des données...', '📍 Récupération des coordonnées GPS...', '✨ Préparation de la fiche...']
+    let stepIdx = 0
+    setImportStep(steps[0])
+    const stepInterval = setInterval(() => {
+      stepIdx = Math.min(stepIdx + 1, steps.length - 1)
+      setImportStep(steps[stepIdx])
+    }, 2500)
     try {
       const res = await fetch('/api/import-lieu', {
         method: 'POST',
@@ -285,6 +295,20 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
             </button>
           </div>
 
+          {importing && (
+            <div style={{ padding: '12px 14px', background: 'var(--accent-bg)', borderRadius: 8, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 16, height: 16, border: '2px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+              <div style={{ fontSize: 13, color: 'var(--accent)' }}>{importStep}</div>
+            </div>
+          )}
+          {importing && !document.querySelector('style[data-spin]') && (() => {
+            const s = document.createElement('style')
+            s.setAttribute('data-spin', '1')
+            s.textContent = '@keyframes spin { to { transform: rotate(360deg) } }'
+            document.head.appendChild(s)
+            return null
+          })()}
+
           {importMode === 'name' ? (
             <div>
               <div style={{ fontSize: 11, color: 'var(--mid)', marginBottom: 8 }}>
@@ -296,7 +320,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
                   placeholder="ex: Restaurant Mizaan Marrakech" style={{ flex: 1 }} />
                 <button className="btn btn-accent btn-sm" type="button" onClick={handleImport}
                   disabled={importing || !importUrl.trim()} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  {importing ? '⏳...' : '✨ Chercher'}
+                  {importing ? '⏳ Recherche...' : '✨ Chercher'}
                 </button>
               </div>
             </div>
@@ -311,7 +335,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
                   placeholder="https://maps.google.com/..." style={{ flex: 1 }} />
                 <button className="btn btn-accent btn-sm" type="button" onClick={handleImport}
                   disabled={importing || !importUrl.trim()} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  {importing ? '⏳...' : '✨ Importer'}
+                  {importing ? '⏳ Analyse...' : '✨ Importer'}
                 </button>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
