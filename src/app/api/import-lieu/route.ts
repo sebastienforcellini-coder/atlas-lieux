@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function POST(req: NextRequest) {
   const { url, query } = await req.json()
 
-  // Extract GPS from Google Maps URL if present
   const gmapsMatch = url?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
 
   const prompt = query
@@ -11,14 +10,16 @@ export async function POST(req: NextRequest) {
 
 Cherche sur Google Maps, TripAdvisor, ou tout autre source pour trouver :
 - Le nom exact
-- L'adresse complète
+- L adresse complète
 - La ville et le pays
-- Les coordonnées GPS précises (OBLIGATOIRE — cherche sur Google Maps)
+- Les coordonnées GPS précises (OBLIGATOIRE)
 - Une description
-- La catégorie (restaurant/cafe/hotel/musee/nature/plage/shop/sport/monument/autre)
-- Des tags pertinents`
+- La catégorie
+- Des tags pertinents
+- Des URLs de photos du lieu (images publiques depuis TripAdvisor, Google Maps, site officiel)`
     : `Extrait les informations de ce lieu depuis cette URL : ${url}
-${gmapsMatch ? `COORDONNEES GPS dans l URL : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : 'Cherche les coordonnées GPS du lieu sur Google Maps.'}`
+${gmapsMatch ? `COORDONNEES GPS dans l URL : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : 'Cherche les coordonnées GPS du lieu.'}
+Essaie aussi de trouver des photos publiques du lieu.`
 
   const fullPrompt = `${prompt}
 
@@ -31,11 +32,14 @@ Reponds UNIQUEMENT avec un JSON valide (sans markdown, sans backticks) :
   "description": "2-3 phrases ou null",
   "categorie": "restaurant|cafe|hotel|musee|nature|plage|shop|sport|monument|autre",
   "tags": ["tag1", "tag2"],
-  "gps_lat": "latitude decimale ex: 31.629490 ou null",
-  "gps_lng": "longitude decimale ex: -7.981710 ou null"
+  "gps_lat": "latitude decimale ou null",
+  "gps_lng": "longitude decimale ou null",
+  "photos": ["url_photo_1", "url_photo_2"]
 }
 
-IMPORTANT : Pour les coordonnees GPS, fais une recherche Google Maps du lieu pour les obtenir. C est obligatoire.`
+IMPORTANT :
+- Pour les coordonnees GPS, cherche sur Google Maps — OBLIGATOIRE
+- Pour les photos : inclus uniquement des URLs directes vers des images (.jpg, .jpeg, .png, .webp) publiquement accessibles. Maximum 3 photos. Si tu n en trouves pas, mets un tableau vide [].`
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -66,6 +70,8 @@ IMPORTANT : Pour les coordonnees GPS, fais une recherche Google Maps du lieu pou
       lieu.gps_lat = gmapsMatch[1]
       lieu.gps_lng = gmapsMatch[2]
     }
+
+    if (!Array.isArray(lieu.photos)) lieu.photos = []
 
     return NextResponse.json({ lieu })
   } catch (e) {
