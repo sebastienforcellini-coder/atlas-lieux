@@ -193,6 +193,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
       gps_lat:     (overwrite && l.gps_lat)     ? l.gps_lat as string     : l.gps_lat as string || f.gps_lat,
       gps_lng:     (overwrite && l.gps_lng)     ? l.gps_lng as string     : l.gps_lng as string || f.gps_lng,
       videos: url ? [...f.videos.filter(v => v !== url), url] : f.videos,
+      photos: (overwrite && (l.photos as string[])?.length) ? l.photos as string[] : [...f.photos, ...((l.photos as string[] || []).filter((p: string) => !f.photos.includes(p)))],
     }))
     if (l.gps_lat && l.gps_lng) setGpsInput(l.gps_lat + ', ' + l.gps_lng)
     setImportPreview(null)
@@ -258,6 +259,17 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
                 </div>
               )
             })}
+            {(importPreview.photos as string[])?.length > 0 && (
+              <div style={{ padding: '8px 10px', borderRadius: 8, marginBottom: 6, background: '#F0FBF0', border: '1px solid #86EFAC' }}>
+                <div style={{ fontSize: 10, color: 'var(--soft)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>Photos trouvées ({(importPreview.photos as string[]).length})</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {(importPreview.photos as string[]).map((p, i) => (
+                    <img key={i} src={p} alt="" style={{ width: 80, height: 60, objectFit: 'cover', borderRadius: 6 }}
+                      onError={e => (e.target as HTMLImageElement).style.display = 'none'} />
+                  ))}
+                </div>
+              </div>
+            )}
             {(importPreview.tags as string[])?.length > 0 && (
               <div style={{ padding: '8px 10px', borderRadius: 8, marginBottom: 6, background: '#F0FBF0', border: '1px solid #86EFAC' }}>
                 <div style={{ fontSize: 10, color: 'var(--soft)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>Tags</div>
