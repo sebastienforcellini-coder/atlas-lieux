@@ -50,6 +50,7 @@ export default function AllLieux({ lieux, onNavigate, onDelete }: Props) {
           <div style={{ fontSize: 12, color: 'var(--soft)' }}>{filtered.length} résultat{filtered.length !== 1 ? 's' : ''}</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-sm btn-accent" onClick={() => onNavigate('form', { editLieu: null })}>+ Nouvelle fiche</button>
           <button
             className="btn btn-sm"
             onClick={() => setFavoriOnly(f => !f)}
