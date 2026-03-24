@@ -30,6 +30,14 @@ export default function Home({ lieux, onNavigate, onDelete }: Props) {
         <div className="serif" style={{ fontSize: 32, fontStyle: 'italic', fontWeight: 300, color: 'var(--text)', lineHeight: 1 }}>Atlas</div>
         <div style={{ height: 1, background: 'var(--accent)', opacity: 0.4, margin: '6px auto', width: 40 }} />
         <div style={{ fontSize: 9, color: 'var(--soft)', letterSpacing: 3, fontFamily: 'Georgia, serif' }}>RÉPERTOIRE DE LIEUX</div>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 16 }}>
+          <button className="btn btn-accent" onClick={() => onNavigate('form', { editLieu: null })} style={{ fontSize: 13 }}>
+            + Nouvelle fiche
+          </button>
+          <button className="btn" onClick={() => onNavigate('geoform')} style={{ fontSize: 13 }}>
+            📍 Ma position
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
