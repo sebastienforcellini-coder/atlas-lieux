@@ -1,47 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+function extractSearchQuery(url: string, query: string | undefined): string {
+  if (query) return query
+  try {
+    const hostname = new URL(url).hostname.replace('www.', '').split('.')[0]
+    return hostname
+  } catch { return url }
+}
+
 export async function POST(req: NextRequest) {
   const { url, query } = await req.json()
-
   const gmapsMatch = url?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+  const searchQuery = extractSearchQuery(url || '', query)
 
-  const prompt = query
-    ? `Recherche ce lieu et extrait toutes ses informations : "${query}"
-
-Cherche sur Google Maps, TripAdvisor, ou tout autre source pour trouver :
-- Le nom exact
-- L adresse complete
-- La ville et le pays
-- Les coordonnees GPS precises (OBLIGATOIRE)
-- Une description
-- La categorie
-- Des tags pertinents
-- Des URLs de photos du lieu (images publiques depuis TripAdvisor, Google Maps, site officiel)`
-    : `Extrait les informations de ce lieu depuis cette URL : ${url}
-${gmapsMatch ? `COORDONNEES GPS dans l URL : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : 'Cherche les coordonnees GPS du lieu.'}
-Essaie aussi de trouver des photos publiques du lieu.`
-
-  const fullPrompt = `${prompt}
-
-Reponds UNIQUEMENT avec un JSON valide (sans markdown, sans backticks) :
-{
+  const jsonSchema = `{
   "name": "nom exact",
-  "country": "pays en francais avec majuscule",
-  "city": "ville avec majuscule",
-  "address": "adresse complete ou null",
+  "country": "pays en francais majuscule",
+  "city": "ville majuscule",
+  "address": "adresse ou null",
   "description": "2-3 phrases ou null",
   "categorie": "restaurant|cafe|hotel|musee|nature|plage|shop|sport|monument|autre",
   "tags": ["tag1", "tag2"],
   "gps_lat": "latitude decimale ou null",
-  "gps_lng": "longitude decimale ou null",
-  "photos": ["url_photo_1", "url_photo_2"]
-}
+  "gps_lng": "longitude decimale ou null"
+}`
 
-IMPORTANT :
-- Pour les coordonnees GPS, cherche sur Google Maps — OBLIGATOIRE
-- Pour les photos : URLs directes vers images (.jpg .jpeg .png .webp) publiques. Max 3. Sinon [].`
+  // Step 1: Try with Claude's own knowledge (no web search — no rate limit)
+  const promptNoSearch = `Tu connais ce lieu : "${searchQuery}"${url ? ` (URL: ${url})` : ''}.
+${gmapsMatch ? `GPS dans l URL : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : ''}
 
-  const callAPI = async () => {
+Donne toutes les informations que tu connais sur ce lieu.
+Reponds UNIQUEMENT avec un JSON valide (sans markdown ni backticks) :
+${jsonSchema}`
+
+  // Step 2: With web search as fallback
+  const promptWithSearch = `Recherche des informations sur ce lieu : "${searchQuery}"${url ? ` (site: ${url})` : ''}.
+${gmapsMatch ? `GPS dans l URL : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : ''}
+
+Utilise web_search pour trouver nom, adresse, ville, pays, GPS, description.
+Reponds UNIQUEMENT avec un JSON valide (sans markdown ni backticks) :
+${jsonSchema}`
+
+  const callClaude = async (withSearch: boolean) => {
+    const body: Record<string, unknown> = {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: withSearch ? promptWithSearch : promptNoSearch }],
+    }
+    if (withSearch) {
+      body.tools = [{ type: 'web_search_20250305', name: 'web_search' }]
+    }
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -49,47 +57,50 @@ IMPORTANT :
         'x-api-key': process.env.ANTHROPIC_API_KEY!,
         'anthropic-version': '2023-06-01',
       },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{ role: 'user', content: fullPrompt }],
-      }),
+      body: JSON.stringify(body),
     })
-    if (!response.ok) throw new Error('API error ' + response.status)
+    if (!response.ok) throw new Error('API ' + response.status)
     return response.json()
   }
 
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const data = await callAPI()
-      const text = (data.content || [])
-        .filter((b: { type: string }) => b.type === 'text')
-        .map((b: { text: string }) => b.text)
-        .join('')
-
-      const clean = text.replace(/```json|```/g, '').trim()
-      const lieu = JSON.parse(clean)
-
-      if (gmapsMatch && !lieu.gps_lat) {
-        lieu.gps_lat = gmapsMatch[1]
-        lieu.gps_lng = gmapsMatch[2]
-      }
-
-      if (!Array.isArray(lieu.photos)) lieu.photos = []
-
-      return NextResponse.json({ lieu })
-    } catch (e) {
-      console.error(`Import attempt ${attempt} failed:`, e)
-      if (attempt < 2) {
-        await new Promise(r => setTimeout(r, 3000))
-        continue
-      }
-      return NextResponse.json({
-        error: 'Analyse impossible pour le moment. Attendez quelques secondes et reessayez.'
-      }, { status: 500 })
-    }
+  const parseResponse = (data: Record<string, unknown>) => {
+    const text = ((data.content as Array<{type: string; text: string}>) || [])
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('')
+    const clean = text.replace(/```json|```/g, '').trim()
+    return JSON.parse(clean)
   }
 
-  return NextResponse.json({ error: 'Echec apres plusieurs tentatives.' }, { status: 500 })
+  // Try without web search first
+  try {
+    const data = await callClaude(false)
+    const lieu = parseResponse(data)
+
+    // If Claude doesn't know key info, fallback to web search
+    const needsSearch = !lieu.name || !lieu.city || (!lieu.gps_lat && !gmapsMatch)
+
+    if (!needsSearch) {
+      if (gmapsMatch && !lieu.gps_lat) { lieu.gps_lat = gmapsMatch[1]; lieu.gps_lng = gmapsMatch[2] }
+        lieu.photos = []
+      return NextResponse.json({ lieu })
+    }
+  } catch (e) {
+    console.log('No-search attempt failed, trying with search:', e)
+  }
+
+  // Fallback: web search
+  await new Promise(r => setTimeout(r, 1000))
+  try {
+    const data = await callClaude(true)
+    const lieu = parseResponse(data)
+    if (gmapsMatch && !lieu.gps_lat) { lieu.gps_lat = gmapsMatch[1]; lieu.gps_lng = gmapsMatch[2] }
+    lieu.photos = []
+    return NextResponse.json({ lieu })
+  } catch (e) {
+    console.error('Web search attempt failed:', e)
+    return NextResponse.json({
+      error: 'Analyse impossible. Attendez 10 secondes et reessayez, ou utilisez le mode "Par nom" avec le nom complet + ville.'
+    }, { status: 500 })
+  }
 }
