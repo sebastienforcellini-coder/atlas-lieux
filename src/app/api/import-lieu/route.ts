@@ -10,15 +10,15 @@ export async function POST(req: NextRequest) {
 
 Cherche sur Google Maps, TripAdvisor, ou tout autre source pour trouver :
 - Le nom exact
-- L adresse complète
+- L adresse complete
 - La ville et le pays
-- Les coordonnées GPS précises (OBLIGATOIRE)
+- Les coordonnees GPS precises (OBLIGATOIRE)
 - Une description
-- La catégorie
+- La categorie
 - Des tags pertinents
 - Des URLs de photos du lieu (images publiques depuis TripAdvisor, Google Maps, site officiel)`
     : `Extrait les informations de ce lieu depuis cette URL : ${url}
-${gmapsMatch ? `COORDONNEES GPS dans l URL : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : 'Cherche les coordonnées GPS du lieu.'}
+${gmapsMatch ? `COORDONNEES GPS dans l URL : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : 'Cherche les coordonnees GPS du lieu.'}
 Essaie aussi de trouver des photos publiques du lieu.`
 
   const fullPrompt = `${prompt}
@@ -39,9 +39,9 @@ Reponds UNIQUEMENT avec un JSON valide (sans markdown, sans backticks) :
 
 IMPORTANT :
 - Pour les coordonnees GPS, cherche sur Google Maps — OBLIGATOIRE
-- Pour les photos : inclus uniquement des URLs directes vers des images (.jpg, .jpeg, .png, .webp) publiquement accessibles. Maximum 3 photos. Si tu n en trouves pas, mets un tableau vide [].`
+- Pour les photos : URLs directes vers images (.jpg .jpeg .png .webp) publiques. Max 3. Sinon [].`
 
-  try {
+  const callAPI = async () => {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -56,26 +56,40 @@ IMPORTANT :
         messages: [{ role: 'user', content: fullPrompt }],
       }),
     })
-
-    const data = await response.json()
-    const text = data.content
-      ?.filter((b: { type: string }) => b.type === 'text')
-      ?.map((b: { text: string }) => b.text)
-      ?.join('') ?? ''
-
-    const clean = text.replace(/```json|```/g, '').trim()
-    const lieu = JSON.parse(clean)
-
-    if (gmapsMatch && !lieu.gps_lat) {
-      lieu.gps_lat = gmapsMatch[1]
-      lieu.gps_lng = gmapsMatch[2]
-    }
-
-    if (!Array.isArray(lieu.photos)) lieu.photos = []
-
-    return NextResponse.json({ lieu })
-  } catch (e) {
-    console.error('Import error:', e)
-    return NextResponse.json({ error: 'Impossible d analyser ce lieu' }, { status: 500 })
+    if (!response.ok) throw new Error('API error ' + response.status)
+    return response.json()
   }
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const data = await callAPI()
+      const text = (data.content || [])
+        .filter((b: { type: string }) => b.type === 'text')
+        .map((b: { text: string }) => b.text)
+        .join('')
+
+      const clean = text.replace(/```json|```/g, '').trim()
+      const lieu = JSON.parse(clean)
+
+      if (gmapsMatch && !lieu.gps_lat) {
+        lieu.gps_lat = gmapsMatch[1]
+        lieu.gps_lng = gmapsMatch[2]
+      }
+
+      if (!Array.isArray(lieu.photos)) lieu.photos = []
+
+      return NextResponse.json({ lieu })
+    } catch (e) {
+      console.error(`Import attempt ${attempt} failed:`, e)
+      if (attempt < 2) {
+        await new Promise(r => setTimeout(r, 3000))
+        continue
+      }
+      return NextResponse.json({
+        error: 'Analyse impossible pour le moment. Attendez quelques secondes et reessayez.'
+      }, { status: 500 })
+    }
+  }
+
+  return NextResponse.json({ error: 'Echec apres plusieurs tentatives.' }, { status: 500 })
 }
