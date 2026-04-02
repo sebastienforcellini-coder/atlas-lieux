@@ -41,7 +41,7 @@ ${jsonSchema}`
 
   const callClaude = async (withSearch: boolean) => {
     const body: Record<string, unknown> = {
-      model: 'claude-sonnet-4-6',  // ✅ modèle actuel
+      model: 'claude-haiku-4-5-20251001',  // ✅ modèle confirmé valide
       max_tokens: 1024,
       messages: [{ role: 'user', content: withSearch ? promptWithSearch : promptNoSearch }],
     }
