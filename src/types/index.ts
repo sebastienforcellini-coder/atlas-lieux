@@ -20,20 +20,17 @@ export interface Lieu {
   favori: boolean
 }
 
-// Catégories statiques de fallback (remplacées par Supabase en prod)
 export const CATEGORIES: { id: string; label: string; icon: string }[] = [
-  { id: 'restaurant', label: 'Restaurant',    icon: '🍽' },
-  { id: 'cafe',       label: 'Café / Bar',    icon: '☕' },
-  { id: 'hotel',      label: 'Hôtel / Riad',  icon: '🏨' },
-  { id: 'musee',      label: 'Musée / Art',   icon: '🏛' },
-  { id: 'nature',     label: 'Nature',        icon: '🌿' },
-  { id: 'plage',      label: 'Plage',         icon: '🏖' },
-  { id: 'shop',       label: 'Shopping',      icon: '🛍' },
-  { id: 'sport',      label: 'Sport',         icon: '⚽' },
-  { id: 'monument',   label: 'Monument',      icon: '🏛' },
-  { id: 'spa',        label: 'Spa / Bien-être',icon: '💆' },
-  { id: 'nightlife',  label: 'Nightlife',     icon: '🎶' },
-  { id: 'autre',      label: 'Autre',         icon: '📍' },
+  { id: 'restaurant', label: 'Restaurant',  icon: '🍽' },
+  { id: 'cafe',       label: 'Café / Bar',  icon: '☕' },
+  { id: 'hotel',      label: 'Hôtel / Riad',icon: '🏨' },
+  { id: 'musee',      label: 'Musée / Art',  icon: '🏛' },
+  { id: 'nature',     label: 'Nature',       icon: '🌿' },
+  { id: 'plage',      label: 'Plage',        icon: '🏖' },
+  { id: 'shop',       label: 'Shopping',     icon: '🛍' },
+  { id: 'sport',      label: 'Sport',        icon: '⚽' },
+  { id: 'monument',   label: 'Monument',     icon: '🏛' },
+  { id: 'autre',      label: 'Autre',        icon: '📍' },
 ]
 
 export function getCat(id: string) {
@@ -48,7 +45,7 @@ export interface Comment {
 
 export type LieuInput = Omit<Lieu, 'id' | 'created_at' | 'updated_at'>
 
-export type View = 'home' | 'all' | 'country' | 'city' | 'detail' | 'form' | 'map' | 'geoform' | 'favoris' | 'collections' | 'categories'
+export type View = 'home' | 'all' | 'country' | 'city' | 'detail' | 'form' | 'map' | 'geoform' | 'favoris'
 
 export interface NavState {
   view: View

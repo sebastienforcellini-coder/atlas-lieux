@@ -9,9 +9,7 @@ import Detail from '@/components/views/Detail'
 import LieuForm from '@/components/views/LieuForm'
 import GeoForm from '@/components/views/GeoForm'
 import Favoris from '@/components/views/Favoris'
-import Collections from '@/components/views/Collections'
 import MapView from '@/components/views/MapView'
-import CategoriesView from '@/components/views/Categories'
 import { ConfirmModal, Loading, Toast } from '@/components/UI'
 import type { Lieu, LieuInput, View, NavState } from '@/types'
 
@@ -20,7 +18,6 @@ const VIEW_LABELS: Record<View, string> = {
   country: 'Pays', city: 'Ville',
   detail: 'Fiche lieu', form: 'Nouveau lieu',
   map: 'Carte', geoform: 'Ma position', favoris: 'Favoris',
-  collections: 'Collections', categories: 'Catégories',
 }
 
 export default function AtlasPage() {
@@ -61,7 +58,7 @@ export default function AtlasPage() {
     await deleteLieu(confirmDelete)
     setConfirmDelete(null)
     showToast('Lieu supprimé.')
-    if (nav.view === 'detail' && nav.lieuId === confirmDelete) navigate('home')
+    navigate('home')
   }
 
   const currentLieu = nav.lieuId ? lieux.find(l => l.id === nav.lieuId) : null
@@ -111,8 +108,6 @@ export default function AtlasPage() {
           {nav.view === 'all' && <AllLieux lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
           {nav.view === 'map' && <MapView lieux={lieux} onNavigate={navigate} />}
           {nav.view === 'favoris' && <Favoris lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
-          {nav.view === 'collections' && <Collections lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
-          {nav.view === 'categories' && <CategoriesView onNavigate={navigate} />}
           {nav.view === 'geoform' && <GeoForm onNavigate={navigate} />}
           {nav.view === 'country' && nav.country && (
             <CountryView country={nav.country} lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Lieu, LieuInput } from '@/types'
 import { Stars } from '@/components/UI'
-import { useCategories } from '@/lib/useCategories'
+import { CATEGORIES } from '@/types'
 import { uploadPhoto } from '@/lib/supabase'
 import { compressImage } from '@/lib/imageUtils'
 import { reverseGeocode } from '@/lib/geocode'
@@ -51,21 +51,15 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
   const isEdit = !!(initial && 'id' in initial && initial.id)
   const [form, setForm] = useState<LieuInput>({ ...EMPTY })
   const [newPhoto, setNewPhoto] = useState('')
-  const [newLink, setNewLink] = useState('')
+  const [newVideo, setNewVideo] = useState('')
   const [newTag, setNewTag] = useState('')
   const [saving, setSaving] = useState(false)
   const [gpsInput, setGpsInput] = useState('')
   const [gpsLocating, setGpsLocating] = useState(false)
   const [gpsError, setGpsError] = useState('')
   const [uploading, setUploading] = useState(false)
-  const [importing, setImporting] = useState(false)
-  const [importStep, setImportStep] = useState('')
-  const [importUrl, setImportUrl] = useState('')
-  const [showImport, setShowImport] = useState(false)
-  const [importMode, setImportMode] = useState<'name' | 'url'>('name')
   const fileRef = useRef<HTMLInputElement>(null)
-  const cameraRef = useRef<HTMLInputElement>(null) 
-  const { categories } = useCategories()
+  const cameraRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (initial) {
@@ -147,63 +141,8 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
     setUploading(false)
   }
 
-  const [importPreview, setImportPreview] = useState<Record<string, unknown> | null>(null)
-
-  const handleImport = async () => {
-    const url = importUrl.trim()
-    if (!url) return
-    setImporting(true)
-    const steps = importMode === 'name'
-      ? ['🔍 Recherche du lieu...', '🌐 Consultation des sources...', '📍 Récupération des coordonnées GPS...', '✨ Préparation de la fiche...']
-      : ['🌐 Lecture de la page...', '📊 Extraction des données...', '📍 Récupération des coordonnées GPS...', '✨ Préparation de la fiche...']
-    let stepIdx = 0
-    setImportStep(steps[0])
-    const stepInterval = setInterval(() => {
-      stepIdx = Math.min(stepIdx + 1, steps.length - 1)
-      setImportStep(steps[stepIdx])
-    }, 2500)
-    try {
-      const res = await fetch('/api/import-lieu', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(importMode === 'name' ? { query: url } : { url }),
-      })
-      const data = await res.json()
-      if (data.error) { alert('Erreur : ' + data.error); return }
-      setImportPreview({ ...data.lieu, _url: url })
-    } catch {
-      alert('Erreur lors de l import')
-    } finally {
-      setImporting(false)
-    }
-  }
-
-  const applyImport = (overwrite: boolean) => {
-    if (!importPreview) return
-    const l = importPreview as Record<string, string | string[]>
-    const url = l._url as string
-    setForm(f => ({
-      ...f,
-      name:        (overwrite && l.name)        ? l.name as string        : l.name as string || f.name,
-      country:     (overwrite && l.country)     ? l.country as string     : l.country as string || f.country,
-      city:        (overwrite && l.city)        ? l.city as string        : l.city as string || f.city,
-      address:     (overwrite && l.address)     ? l.address as string     : l.address as string || f.address,
-      description: (overwrite && l.description) ? l.description as string : l.description as string || f.description,
-      categorie:   (overwrite && l.categorie)   ? l.categorie as string   : l.categorie as string || f.categorie,
-      tags:        (overwrite && (l.tags as string[])?.length) ? l.tags as string[] : (l.tags as string[])?.length ? l.tags as string[] : f.tags,
-      gps_lat:     (overwrite && l.gps_lat)     ? l.gps_lat as string     : l.gps_lat as string || f.gps_lat,
-      gps_lng:     (overwrite && l.gps_lng)     ? l.gps_lng as string     : l.gps_lng as string || f.gps_lng,
-      videos: url ? [...f.videos.filter(v => v !== url), url] : f.videos,
-
-    }))
-    if (l.gps_lat && l.gps_lng) setGpsInput(l.gps_lat + ', ' + l.gps_lng)
-    setImportPreview(null)
-    setShowImport(false)
-    setImportUrl('')
-  }
-
   const addPhoto = () => { const v = newPhoto.trim(); if (!v) return; up('photos', [...form.photos, v]); setNewPhoto('') }
-  const addLink = () => { const v = newLink.trim(); if (!v) return; up('videos', [...form.videos, v]); setNewLink('') }
+  const addVideo = () => { const v = newVideo.trim(); if (!v) return; up('videos', [...form.videos, v]); setNewVideo('') }
   const addTag = () => { const v = newTag.trim(); if (!v || form.tags.includes(v)) return; up('tags', [...form.tags, v]); setNewTag('') }
 
   const handleSave = async () => {
@@ -226,133 +165,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
         <div className="serif" style={{ fontSize: 22, fontStyle: 'italic', fontWeight: 300 }}>
           {isEdit ? 'Modifier — ' + form.name : 'Nouveau lieu'}
         </div>
-        {!isEdit && (
-          <button className="btn btn-sm" type="button" onClick={() => setShowImport(s => !s)}>
-            🔗 Importer depuis un lien
-          </button>
-        )}
       </div>
-
-      {importPreview && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,24,20,.6)', zIndex: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: 'var(--white)', borderRadius: 16, padding: 20, width: '100%', maxWidth: 480, maxHeight: '80vh', overflowY: 'auto' }}>
-            <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>Aperçu de l import</div>
-            <div style={{ fontSize: 11, color: 'var(--soft)', marginBottom: 14 }}>Les champs en vert seront ajoutés. Choisis comment appliquer.</div>
-            {[
-              ['Nom', 'name'], ['Pays', 'country'], ['Ville', 'city'],
-              ['Adresse', 'address'], ['Description', 'description'],
-              ['Catégorie', 'categorie'], ['GPS', 'gps_lat'],
-            ].map(([label, key]) => {
-              const imported = key === 'gps_lat'
-                ? (importPreview.gps_lat && importPreview.gps_lng ? importPreview.gps_lat + ', ' + importPreview.gps_lng : null)
-                : importPreview[key]
-              const current = key === 'gps_lat'
-                ? (form.gps_lat && form.gps_lng ? form.gps_lat + ', ' + form.gps_lng : null)
-                : form[key as keyof typeof form]
-              if (!imported) return null
-              return (
-                <div key={key} style={{ padding: '8px 10px', borderRadius: 8, marginBottom: 6, background: current ? 'var(--bg2)' : '#F0FBF0', border: '1px solid', borderColor: current ? 'var(--line)' : '#86EFAC' }}>
-                  <div style={{ fontSize: 10, color: 'var(--soft)', marginBottom: 2, textTransform: 'uppercase', letterSpacing: 1 }}>{label}</div>
-                  {current && String(current) !== String(imported) && (
-                    <div style={{ fontSize: 11, color: 'var(--soft)', textDecoration: 'line-through', marginBottom: 2 }}>{String(current)}</div>
-                  )}
-                  <div style={{ fontSize: 13, color: current ? 'var(--text)' : '#15803D' }}>{String(imported)}</div>
-                </div>
-              )
-            })}
-
-            {(importPreview.tags as string[])?.length > 0 && (
-              <div style={{ padding: '8px 10px', borderRadius: 8, marginBottom: 6, background: '#F0FBF0', border: '1px solid #86EFAC' }}>
-                <div style={{ fontSize: 10, color: 'var(--soft)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>Tags</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                  {(importPreview.tags as string[]).map(t => <span key={t} style={{ padding: '2px 8px', background: '#DCFCE7', borderRadius: 100, fontSize: 11, color: '#15803D' }}>{t}</span>)}
-                </div>
-              </div>
-            )}
-            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-              <button className="btn" style={{ flex: 1 }} onClick={() => setImportPreview(null)}>Annuler</button>
-              <button className="btn" style={{ flex: 1 }} onClick={() => applyImport(false)}>Compléter seulement</button>
-              <button className="btn btn-accent" style={{ flex: 1 }} onClick={() => applyImport(true)}>Tout remplacer</button>
-            </div>
-            <div style={{ fontSize: 10, color: 'var(--soft)', marginTop: 8, textAlign: 'center' }}>
-              Compléter = ne touche pas aux champs déjà remplis · Remplacer = écrase tout
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showImport && (
-        <div style={{ background: 'var(--accent-bg)', border: '1px solid var(--accent)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
-          <div style={{ fontSize: 12, color: 'var(--accent)', marginBottom: 8, fontWeight: 500 }}>
-            🤖 Colle un lien et Claude remplira la fiche automatiquement
-          </div>
-            {/* Toggle mode */}
-          <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-            <button type="button" onClick={() => setImportMode('name')}
-              style={{ flex: 1, padding: '6px', borderRadius: 8, fontSize: 12, cursor: 'pointer', border: '1px solid', borderColor: importMode === 'name' ? 'var(--accent)' : 'var(--line2)', background: importMode === 'name' ? 'var(--accent-bg)' : 'var(--bg)', color: importMode === 'name' ? 'var(--accent)' : 'var(--mid)' }}>
-              🔍 Par nom
-            </button>
-            <button type="button" onClick={() => setImportMode('url')}
-              style={{ flex: 1, padding: '6px', borderRadius: 8, fontSize: 12, cursor: 'pointer', border: '1px solid', borderColor: importMode === 'url' ? 'var(--accent)' : 'var(--line2)', background: importMode === 'url' ? 'var(--accent-bg)' : 'var(--bg)', color: importMode === 'url' ? 'var(--accent)' : 'var(--mid)' }}>
-              🔗 Par lien
-            </button>
-          </div>
-
-          {importing && (
-            <div style={{ padding: '12px 14px', background: 'var(--accent-bg)', borderRadius: 8, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 16, height: 16, border: '2px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
-              <div style={{ fontSize: 13, color: 'var(--accent)' }}>{importStep}</div>
-            </div>
-          )}
-          {importing && !document.querySelector('style[data-spin]') && (() => {
-            const s = document.createElement('style')
-            s.setAttribute('data-spin', '1')
-            s.textContent = '@keyframes spin { to { transform: rotate(360deg) } }'
-            document.head.appendChild(s)
-            return null
-          })()}
-
-          {importMode === 'name' ? (
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--mid)', marginBottom: 8 }}>
-                Tape le nom + ville et Claude trouve tout automatiquement (GPS inclus)
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input className="field-input" value={importUrl} onChange={e => setImportUrl(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleImport())}
-                  placeholder="ex: Restaurant Mizaan Marrakech" style={{ flex: 1 }} />
-                <button className="btn btn-accent btn-sm" type="button" onClick={handleImport}
-                  disabled={importing || !importUrl.trim()} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  {importing ? '⏳ Recherche...' : '✨ Chercher'}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--mid)', marginBottom: 8 }}>
-                Colle un lien Google Maps, TripAdvisor ou site officiel
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input className="field-input" value={importUrl} onChange={e => setImportUrl(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleImport())}
-                  placeholder="https://maps.google.com/..." style={{ flex: 1 }} />
-                <button className="btn btn-accent btn-sm" type="button" onClick={handleImport}
-                  disabled={importing || !importUrl.trim()} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  {importing ? '⏳ Analyse...' : '✨ Importer'}
-                </button>
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <a href={`https://maps.google.com/?q=${encodeURIComponent(form.name || form.city || '')}`}
-                  target="_blank" rel="noopener"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, fontSize: 12, border: '1px solid var(--line2)', background: 'var(--bg)', color: 'var(--mid)', textDecoration: 'none' }}>
-                  🗺 Ouvrir Google Maps
-                </a>
-                <div style={{ fontSize: 11, color: 'var(--soft)', alignSelf: 'center' }}>→ Partager → copier le lien</div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       <div className="grid-2col" style={{ gap: 12 }}>
         <div style={{ gridColumn: '1/-1' }}>
@@ -385,7 +198,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
         <div style={{ flex: 1, minWidth: 200 }}>
           <div className="label">Catégorie</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-            {categories.map(c => (
+            {CATEGORIES.map(c => (
               <button
                 key={c.id}
                 type="button"
@@ -514,11 +327,11 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
         </div>
       )}
 
-      <Section title="Liens web" />
+      <Section title="Vidéos YouTube" />
       <div className="photo-input-row">
-        <input className="field-input" value={newLink} onChange={e => setNewLink(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addLink())} placeholder="https://restaurant.com, tripadvisor.com, youtube.com..." />
-        <button className="btn btn-sm" type="button" onClick={addLink}>Ajouter</button>
+        <input className="field-input" value={newVideo} onChange={e => setNewVideo(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addVideo())} placeholder="https://youtube.com/watch?v=…" />
+        <button className="btn btn-sm" type="button" onClick={addVideo}>Ajouter</button>
       </div>
       {form.videos.map((u, i) => (
         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: '1px solid var(--line)', fontSize: 12, color: 'var(--mid)' }}>
