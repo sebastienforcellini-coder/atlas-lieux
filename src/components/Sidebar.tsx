@@ -1,6 +1,5 @@
 'use client'
 import type { View } from '@/types'
-// Views: home | all | map | geoform | form | country | city | detail | favoris
 
 interface Props {
   current: View
@@ -55,6 +54,16 @@ export default function Sidebar({ current, onNavigate }: Props) {
         onClick={() => onNavigate('geoform')}
       >
         <span className="nav-icon">📍</span>Depuis ma position
+      </button>
+
+      <div style={{ height: 1, background: 'var(--line)', margin: '12px 20px' }} />
+
+      <div className="nav-section">Paramètres</div>
+      <button
+        className={`nav-item${current === 'categories' ? ' on' : ''}`}
+        onClick={() => onNavigate('categories' as View)}
+      >
+        <span className="nav-icon">🏷</span>Catégories
       </button>
 
       <div style={{ flex: 1 }} />

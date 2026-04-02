@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Lieu, LieuInput } from '@/types'
 import { Stars } from '@/components/UI'
-import { CATEGORIES } from '@/types'
+import { useCategories } from '@/lib/useCategories'
 import { uploadPhoto } from '@/lib/supabase'
 import { compressImage } from '@/lib/imageUtils'
 import { reverseGeocode } from '@/lib/geocode'
@@ -64,7 +64,8 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
   const [showImport, setShowImport] = useState(false)
   const [importMode, setImportMode] = useState<'name' | 'url'>('name')
   const fileRef = useRef<HTMLInputElement>(null)
-  const cameraRef = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null) 
+  const { categories } = useCategories()
 
   useEffect(() => {
     if (initial) {
@@ -384,7 +385,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
         <div style={{ flex: 1, minWidth: 200 }}>
           <div className="label">Catégorie</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-            {CATEGORIES.map(c => (
+            {categories.map(c => (
               <button
                 key={c.id}
                 type="button"
