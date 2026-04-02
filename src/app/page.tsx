@@ -9,15 +9,17 @@ import Detail from '@/components/views/Detail'
 import LieuForm from '@/components/views/LieuForm'
 import GeoForm from '@/components/views/GeoForm'
 import Favoris from '@/components/views/Favoris'
+import Collections from '@/components/views/Collections'
 import MapView from '@/components/views/MapView'
-import { ConfirmModal, Loading, Toast } from '@/components/UI'
+import { ConfirmModal, Toast } from '@/components/UI'
 import type { Lieu, LieuInput, View, NavState } from '@/types'
 
 const VIEW_LABELS: Record<View, string> = {
   home: 'Accueil', all: 'Tous les lieux',
   country: 'Pays', city: 'Ville',
   detail: 'Fiche lieu', form: 'Nouveau lieu',
-  map: 'Carte', geoform: 'Ma position', favoris: 'Favoris',
+  map: 'Carte', geoform: 'Ma position',
+  favoris: 'Favoris', collections: 'Collections',
 }
 
 export default function AtlasPage() {
@@ -58,7 +60,7 @@ export default function AtlasPage() {
     await deleteLieu(confirmDelete)
     setConfirmDelete(null)
     showToast('Lieu supprimé.')
-    navigate('home')
+    if (nav.view === 'detail' && nav.lieuId === confirmDelete) navigate('home')
   }
 
   const currentLieu = nav.lieuId ? lieux.find(l => l.id === nav.lieuId) : null
@@ -78,12 +80,9 @@ export default function AtlasPage() {
         />
       )}
 
-      {/* Mobile topbar */}
       <div className="mobile-topbar">
-        <button
-          onClick={() => setMenuOpen(true)}
-          style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 8, color: 'var(--mid)', padding: '8px 12px', cursor: 'pointer', fontSize: 18, lineHeight: 1, minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >☰</button>
+        <button onClick={() => setMenuOpen(true)}
+          style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 8, color: 'var(--mid)', padding: '8px 12px', cursor: 'pointer', fontSize: 18, lineHeight: 1, minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>☰</button>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontFamily: 'Georgia, serif', fontSize: 15, fontStyle: 'italic', color: 'var(--text)', lineHeight: 1.1 }}>Atlas</div>
           <div style={{ height: '0.5px', background: 'var(--accent)', margin: '2px 6px', opacity: 0.7 }} />
@@ -92,7 +91,6 @@ export default function AtlasPage() {
         <div style={{ fontSize: 11, color: 'var(--soft)' }}>{VIEW_LABELS[nav.view]}</div>
       </div>
 
-      {/* Mobile drawer */}
       <div className={`mobile-nav-overlay${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)} />
       <div className={`mobile-nav-drawer${menuOpen ? ' open' : ''}`}>
         <Sidebar current={nav.view} onNavigate={navigate} />
@@ -108,6 +106,7 @@ export default function AtlasPage() {
           {nav.view === 'all' && <AllLieux lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
           {nav.view === 'map' && <MapView lieux={lieux} onNavigate={navigate} />}
           {nav.view === 'favoris' && <Favoris lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
+          {nav.view === 'collections' && <Collections lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
           {nav.view === 'geoform' && <GeoForm onNavigate={navigate} />}
           {nav.view === 'country' && nav.country && (
             <CountryView country={nav.country} lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />
@@ -116,24 +115,15 @@ export default function AtlasPage() {
             <CityView country={nav.country} city={nav.city} lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />
           )}
           {nav.view === 'detail' && currentLieu && (
-            <Detail
-              lieu={currentLieu}
-              onNavigate={navigate}
+            <Detail lieu={currentLieu} onNavigate={navigate}
               onUpdate={async (id, data) => { await updateLieu(id, data as LieuInput) }}
-              onDelete={handleDelete}
-              onShare={showToast}
-            />
+              onDelete={handleDelete} onShare={showToast} />
           )}
           {nav.view === 'form' && (
-            <LieuForm
-              initial={nav.editLieu ?? null}
-              allLieux={lieux}
-              onSave={handleSave}
+            <LieuForm initial={nav.editLieu ?? null} allLieux={lieux} onSave={handleSave}
               onCancel={() => nav.editLieu && 'id' in nav.editLieu
                 ? navigate('detail', { lieuId: (nav.editLieu as Lieu).id })
-                : navigate('home')
-              }
-            />
+                : navigate('home')} />
           )}
         </main>
       </div>

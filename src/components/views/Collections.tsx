@@ -32,7 +32,9 @@ function CollectionForm({ lieux, initial, onSave, onCancel }: {
       <input className="field-input" value={desc} onChange={e => setDesc(e.target.value)}
         placeholder="Description courte..." style={{ marginBottom: 12 }} />
 
-      <div className="label" style={{ marginBottom: 8 }}>Lieux à inclure ({selected.length} sélectionné{selected.length !== 1 ? 's' : ''})</div>
+      <div className="label" style={{ marginBottom: 8 }}>
+        Lieux à inclure ({selected.length} sélectionné{selected.length !== 1 ? 's' : ''})
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 6, maxHeight: 280, overflowY: 'auto', marginBottom: 14 }}>
         {lieux.map(l => (
           <div key={l.id} onClick={() => toggle(l.id)}
@@ -110,7 +112,6 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
             const isOpen = open === col.id
             return (
               <div key={col.id} style={{ border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
-                {/* Header */}
                 <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: 'var(--bg2)' }} onClick={() => setOpen(isOpen ? null : col.id)}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 17, fontWeight: 300 }}>{col.title}</div>
@@ -119,14 +120,13 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button className="btn btn-sm" onClick={e => { e.stopPropagation(); handleShare(col) }} style={{ fontSize: 12 }}>
-                      {copied === col.id ? '✓ Copié' : '📤 Partager'}
+                      {copied === col.id ? '✓ Copié' : '🔗 Partager'}
                     </button>
-                    <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setEditing(col) }} style={{ fontSize: 12 }}>✏</button>
-                    <button className="btn btn-sm btn-danger" onClick={e => { e.stopPropagation(); if (confirm('Supprimer cette collection ?')) deleteCollection(col.id) }} style={{ fontSize: 12 }}>✕</button>
+                    <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setEditing(col) }} style={{ fontSize: 12 }}>✏️</button>
+                    <button className="btn btn-sm btn-danger" onClick={e => { e.stopPropagation(); if (confirm('Supprimer cette collection ?')) deleteCollection(col.id) }} style={{ fontSize: 12 }}>🗑</button>
                     <span style={{ fontSize: 12, color: 'var(--soft)', alignSelf: 'center' }}>{isOpen ? '▲' : '▼'}</span>
                   </div>
                 </div>
-                {/* Lieux */}
                 {isOpen && (
                   <div style={{ padding: '12px 16px' }}>
                     {colLieux.length === 0

@@ -1,6 +1,5 @@
 'use client'
 import type { View } from '@/types'
-// Views: home | all | map | geoform | form | country | city | detail | favoris
 
 interface Props {
   current: View
@@ -30,27 +29,25 @@ export default function Sidebar({ current, onNavigate }: Props) {
       <button className={`nav-item${current === 'all' ? ' on' : ''}`} onClick={() => onNavigate('all')}>
         <span className="nav-icon">🔍</span>Tous les lieux
       </button>
-      <button className={`nav-item${current === 'favoris' ? ' on' : ''}`} onClick={() => onNavigate('favoris' as View)}>
+      <button className={`nav-item${current === 'favoris' ? ' on' : ''}`} onClick={() => onNavigate('favoris')}>
         <span className="nav-icon">★</span>Favoris
       </button>
       <button className={`nav-item${current === 'map' ? ' on' : ''}`} onClick={() => onNavigate('map')}>
         <span className="nav-icon">🗾</span>Carte
       </button>
+      <button className={`nav-item${current === 'collections' ? ' on' : ''}`} onClick={() => onNavigate('collections')}>
+        <span className="nav-icon">📚</span>Collections
+      </button>
 
       <div style={{ height: 1, background: 'var(--line)', margin: '12px 20px' }} />
 
       <div className="nav-section">Créer</div>
-      <button
-        className={`nav-item${current === 'form' ? ' on' : ''}`}
+      <button className={`nav-item${current === 'form' ? ' on' : ''}`}
         onClick={() => onNavigate('form', { editLieu: null })}
-        style={{ color: 'var(--accent)' }}
-      >
+        style={{ color: 'var(--accent)' }}>
         <span className="nav-icon">＋</span>Nouvelle fiche
       </button>
-      <button
-        className={`nav-item${current === 'geoform' ? ' on' : ''}`}
-        onClick={() => onNavigate('geoform')}
-      >
+      <button className={`nav-item${current === 'geoform' ? ' on' : ''}`} onClick={() => onNavigate('geoform')}>
         <span className="nav-icon">📍</span>Depuis ma position
       </button>
 
