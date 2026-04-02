@@ -17,74 +17,28 @@ function GpsMenu({ lat, lng, onClose }: { lat: string; lng: string; onClose: () 
   const isAndroid = typeof navigator !== 'undefined' && /Android/.test(navigator.userAgent)
 
   const apps = [
-    {
-      name: 'Google Maps',
-      icon: '🗺',
-      url: `https://maps.google.com/?q=${lat},${lng}`,
-      platforms: ['ios', 'android', 'desktop'],
-    },
-    {
-      name: 'Plans',
-      icon: '🍎',
-      url: `https://maps.apple.com/?q=${lat},${lng}&ll=${lat},${lng}`,
-      platforms: ['ios', 'desktop'],
-    },
-    {
-      name: 'Waze',
-      icon: '🚗',
-      url: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`,
-      platforms: ['ios', 'android'],
-    },
-    {
-      name: 'Maps.me',
-      icon: '🌍',
-      url: `https://maps.me/?ll=${lat},${lng}&z=16`,
-      platforms: ['android'],
-    },
+    { name: 'Google Maps', icon: '🗺', url: `https://maps.google.com/?q=${lat},${lng}`, platforms: ['ios', 'android', 'desktop'] },
+    { name: 'Plans', icon: '🍎', url: `https://maps.apple.com/?q=${lat},${lng}&ll=${lat},${lng}`, platforms: ['ios', 'desktop'] },
+    { name: 'Waze', icon: '🚗', url: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, platforms: ['ios', 'android'] },
+    { name: 'Maps.me', icon: '🌍', url: `https://maps.me/?ll=${lat},${lng}&z=16`, platforms: ['android'] },
   ]
 
   const platform = isIOS ? 'ios' : isAndroid ? 'android' : 'desktop'
   const filtered = apps.filter(a => a.platforms.includes(platform))
   return (
-    <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(26,24,20,.5)', zIndex: 500, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
-      onClick={onClose}
-    >
-      <div
-        style={{ background: 'var(--white)', borderRadius: '16px 16px 0 0', padding: '16px 16px 32px', width: '100%', maxWidth: 480 }}
-        onClick={e => e.stopPropagation()}
-      >
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,24,20,.5)', zIndex: 500, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={onClose}>
+      <div style={{ background: 'var(--white)', borderRadius: '16px 16px 0 0', padding: '16px 16px 32px', width: '100%', maxWidth: 480 }} onClick={e => e.stopPropagation()}>
         <div style={{ width: 36, height: 4, background: 'var(--line2)', borderRadius: 2, margin: '0 auto 16px' }} />
-        <div style={{ fontSize: 12, color: 'var(--soft)', textAlign: 'center', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
-          Ouvrir avec
-        </div>
+        <div style={{ fontSize: 12, color: 'var(--soft)', textAlign: 'center', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>Ouvrir avec</div>
         {filtered.map(app => (
-          <a
-            key={app.name}
-            href={app.url}
-            target="_blank"
-            rel="noopener"
-            onClick={onClose}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 14,
-              padding: '14px 16px', borderRadius: 10,
-              textDecoration: 'none', color: 'var(--text)',
-              border: '1px solid var(--line)', marginBottom: 8,
-              background: 'var(--bg)', transition: 'background .15s',
-              fontSize: 15,
-            }}
-          >
+          <a key={app.name} href={app.url} target="_blank" rel="noopener" onClick={onClose}
+            style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 10, textDecoration: 'none', color: 'var(--text)', border: '1px solid var(--line)', marginBottom: 8, background: 'var(--bg)', fontSize: 15 }}>
             <span style={{ fontSize: 24 }}>{app.icon}</span>
             <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontWeight: 300 }}>{app.name}</span>
             <span style={{ marginLeft: 'auto', color: 'var(--soft)', fontSize: 12 }}>→</span>
           </a>
         ))}
-        <button
-          onClick={onClose}
-          style={{ width: '100%', padding: '12px', border: '1px solid var(--line2)', borderRadius: 10, background: 'var(--bg)', color: 'var(--mid)', cursor: 'pointer', fontSize: 14, marginTop: 4 }}
-        >
-          Annuler
-        </button>
+        <button onClick={onClose} style={{ width: '100%', padding: '12px', border: '1px solid var(--line2)', borderRadius: 10, background: 'var(--bg)', color: 'var(--mid)', cursor: 'pointer', fontSize: 14, marginTop: 4 }}>Annuler</button>
       </div>
     </div>
   )
@@ -98,9 +52,7 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
   const [saving, setSaving] = useState(false)
 
   const cmts = lieu.comments ?? []
-  const gpsLink = lieu.gps_lat && lieu.gps_lng
-    ? 'https://maps.google.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng : null
-
+  const gpsLink = lieu.gps_lat && lieu.gps_lng ? 'https://maps.google.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng : null
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://atlas-lieux.vercel.app'
   const shareUrl = origin + '/partager/' + (lieu.slug || lieu.id)
 
@@ -116,15 +68,7 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
 
   const handleShare = async () => {
     if (navigator.share) {
-      try {
-        await navigator.share({
-          title: lieu.name,
-          text: buildShareText(),
-          url: shareUrl,
-        })
-      } catch {
-        // user cancelled, do nothing
-      }
+      try { await navigator.share({ title: lieu.name, text: buildShareText(), url: shareUrl }) } catch {}
     } else {
       navigator.clipboard?.writeText(shareUrl)
       onShare('Lien copie dans le presse-papier !')
@@ -187,9 +131,12 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', flexShrink: 0 }}>
           <button
             className="btn btn-sm"
-            onClick={handleToggleFavori}
-            style={{ color: lieu.favori ? '#E0952A' : 'var(--mid)', borderColor: lieu.favori ? '#E0952A' : undefined }}
+            onClick={() => onNavigate('form', { editLieu: { country: lieu.country, city: lieu.city } })}
+            style={{ color: 'var(--accent)', borderColor: 'var(--accent)' }}
           >
+            ＋ Nouvelle fiche
+          </button>
+          <button className="btn btn-sm" onClick={handleToggleFavori} style={{ color: lieu.favori ? '#E0952A' : 'var(--mid)', borderColor: lieu.favori ? '#E0952A' : undefined }}>
             {lieu.favori ? '★ Favori' : '☆ Favori'}
           </button>
           <button className="btn btn-sm btn-accent" onClick={handleShare}>Partager</button>
@@ -224,11 +171,7 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
           )}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
             {gpsLink && (
-              <button
-                className="pill"
-                onClick={() => setShowGpsMenu(true)}
-                style={{ cursor: 'pointer', border: '1px solid var(--line2)', background: 'var(--white)' }}
-              >
+              <button className="pill" onClick={() => setShowGpsMenu(true)} style={{ cursor: 'pointer', border: '1px solid var(--line2)', background: 'var(--white)' }}>
                 📍 {parseFloat(lieu.gps_lat!).toFixed(5)}, {parseFloat(lieu.gps_lng!).toFixed(5)} → Navigation
               </button>
             )}
@@ -258,8 +201,7 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
                   const em = ytEmbed(u)
                   const domain = (() => { try { return new URL(u).hostname.replace('www.', '') } catch { return u } })()
                   return em
-                    ? <iframe key={i} width="100%" height="240" src={em} frameBorder="0" allowFullScreen
-                        style={{ borderRadius: 8, border: '1px solid var(--line)' }} />
+                    ? <iframe key={i} width="100%" height="240" src={em} frameBorder="0" allowFullScreen style={{ borderRadius: 8, border: '1px solid var(--line)' }} />
                     : <a key={i} href={u} target="_blank" rel="noopener"
                         style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'var(--bg2)', borderRadius: 10, border: '1px solid var(--line)', textDecoration: 'none', color: 'var(--text)' }}>
                         <span style={{ fontSize: 20 }}>🔗</span>
@@ -278,14 +220,8 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
       {tab === 'cmt' && (
         <div>
           <div style={{ marginBottom: 16 }}>
-            <textarea
-              className="field-input"
-              value={newComment}
-              onChange={e => setNewComment(e.target.value)}
-              placeholder="Ajouter un commentaire, une note..."
-              rows={3}
-              style={{ marginBottom: 8, resize: 'vertical' }}
-            />
+            <textarea className="field-input" value={newComment} onChange={e => setNewComment(e.target.value)}
+              placeholder="Ajouter un commentaire, une note..." rows={3} style={{ marginBottom: 8, resize: 'vertical' }} />
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <button className="btn btn-primary btn-sm" onClick={handleAddComment} disabled={saving}>
                 {saving ? 'Enregistrement...' : 'Ajouter'}
@@ -299,10 +235,7 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
                   <p className="comment-text">{c.text}</p>
                   <div className="comment-meta">
                     <span>{fd(c.date)}</span>
-                    <button
-                      onClick={() => handleDeleteComment(c.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: 'var(--soft)' }}
-                    >Supprimer</button>
+                    <button onClick={() => handleDeleteComment(c.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: 'var(--soft)' }}>Supprimer</button>
                   </div>
                 </div>
               ))

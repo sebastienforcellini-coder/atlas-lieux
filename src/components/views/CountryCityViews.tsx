@@ -22,6 +22,13 @@ export function CountryView({ country, lieux, onNavigate, onDelete }: CountryPro
       </nav>
       <div className="page-header">
         <div className="serif" style={{ fontSize: 22, fontStyle: 'italic', fontWeight: 300 }}>{country}</div>
+        <button
+          className="btn btn-sm"
+          onClick={() => onNavigate('form', { editLieu: { country } })}
+          style={{ color: 'var(--accent)', borderColor: 'var(--accent)', flexShrink: 0 }}
+        >
+          ＋ Nouvelle fiche
+        </button>
       </div>
       <div className="grid-cats">
         {cities.map(c => {
@@ -60,6 +67,13 @@ export function CityView({ country, city, lieux, onNavigate, onDelete }: CityPro
       </nav>
       <div className="page-header">
         <div className="serif" style={{ fontSize: 22, fontStyle: 'italic', fontWeight: 300 }}>{city}</div>
+        <button
+          className="btn btn-sm"
+          onClick={() => onNavigate('form', { editLieu: { country, city } })}
+          style={{ color: 'var(--accent)', borderColor: 'var(--accent)', flexShrink: 0 }}
+        >
+          ＋ Nouvelle fiche
+        </button>
       </div>
       {filtered.length === 0
         ? <div className="empty-state"><div>Aucun lieu dans cette ville.</div></div>
