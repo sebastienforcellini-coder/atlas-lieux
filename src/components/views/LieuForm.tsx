@@ -341,7 +341,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
                 </button>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <a href={`https://maps.google.com/search/?q=${encodeURIComponent(form.name || form.city || '')}`}
+                <a href={`https://maps.google.com/?q=${encodeURIComponent(form.name || form.city || '')}`}
                   target="_blank" rel="noopener"
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, fontSize: 12, border: '1px solid var(--line2)', background: 'var(--bg)', color: 'var(--mid)', textDecoration: 'none' }}>
                   🗺 Ouvrir Google Maps
