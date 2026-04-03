@@ -13,26 +13,13 @@ export async function POST(req: NextRequest) {
   const gmapsMatch = url?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
   const searchQuery = extractSearchQuery(url || '', query)
 
-  const jsonSchema = `{
-  "name": "nom exact",
-  "country": "pays en francais majuscule",
-  "city": "ville majuscule",
-  "address": "adresse ou null",
-  "description": "2-3 phrases ou null",
-  "categorie": "restaurant|cafe|hotel|musee|nature|plage|shop|sport|monument|autre",
-  "tags": ["tag1", "tag2"],
-  "gps_lat": "latitude decimale ou null",
-  "gps_lng": "longitude decimale ou null",
-  "phone": "numero de telephone avec indicatif ou null",
-  "whatsapp": "numero whatsapp avec indicatif ou null",
-  "website": "URL complete du site officiel avec https:// ou null"
-}`
+  const prompt = `Tu es une base de données de lieux touristiques. Reponds UNIQUEMENT avec un objet JSON valide, sans aucun texte avant ou après, sans markdown, sans backticks.
 
-  const prompt = `Tu es un expert en lieux touristiques. Donne toutes les informations que tu connais sur ce lieu : "${searchQuery}"${url ? ` (URL: ${url})` : ''}.
-${gmapsMatch ? `GPS dans l'URL : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : ''}
+Lieu recherché : "${searchQuery}"${url ? ` (URL: ${url})` : ''}
+${gmapsMatch ? `Coordonnées GPS dans l'URL : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : ''}
 
-Reponds UNIQUEMENT avec un JSON valide (sans markdown ni backticks) :
-${jsonSchema}`
+JSON requis (utilise null pour les champs inconnus) :
+{"name":"nom exact du lieu","country":"pays en français","city":"ville","address":"adresse complète ou null","description":"2-3 phrases de description ou null","categorie":"restaurant|cafe|hotel|musee|nature|plage|shop|sport|monument|spa|autre","tags":["tag1","tag2"],"gps_lat":"latitude décimale ou null","gps_lng":"longitude décimale ou null","phone":"numéro de téléphone avec indicatif pays ou null","whatsapp":"numéro WhatsApp avec indicatif pays ou null","website":"URL complète avec https:// ou null"}`
 
   try {
     const response = await fetch(
@@ -43,8 +30,9 @@ ${jsonSchema}`
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.1,
+            temperature: 0,
             maxOutputTokens: 1024,
+            responseMimeType: 'application/json',
           },
         }),
       }
@@ -63,17 +51,19 @@ ${jsonSchema}`
     if (!jsonMatch) throw new Error('Aucun JSON dans la réponse')
 
     const lieu = JSON.parse(jsonMatch[0])
+
     if (gmapsMatch && !lieu.gps_lat) {
       lieu.gps_lat = gmapsMatch[1]
       lieu.gps_lng = gmapsMatch[2]
     }
-    lieu.photos = []
 
-    // Nettoyer website : ajouter https:// si manquant, supprimer si invalide
+    // Nettoyer website
     if (lieu.website) {
       if (!lieu.website.startsWith('http')) lieu.website = 'https://' + lieu.website
       try { new URL(lieu.website) } catch { lieu.website = null }
     }
+
+    lieu.photos = []
 
     return NextResponse.json({ lieu })
 
