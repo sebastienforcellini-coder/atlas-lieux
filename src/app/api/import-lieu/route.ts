@@ -8,18 +8,45 @@ function extractSearchQuery(url: string, query: string | undefined): string {
   } catch { return url }
 }
 
+async function fetchPageContent(url: string): Promise<string> {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Atlas-Bot/1.0)' },
+      signal: AbortSignal.timeout(8000),
+    })
+    if (!res.ok) return ''
+    const html = await res.text()
+    // Extraire le texte brut en supprimant les balises HTML
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 4000) // Limiter pour ne pas dépasser les tokens
+    return text
+  } catch {
+    return ''
+  }
+}
+
 export async function POST(req: NextRequest) {
   const { url, query } = await req.json()
   const gmapsMatch = url?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
   const searchQuery = extractSearchQuery(url || '', query)
 
-  const prompt = `Tu es une base de données de lieux touristiques. Reponds UNIQUEMENT avec un objet JSON valide, sans aucun texte avant ou après, sans markdown, sans backticks.
+  // Si c'est une URL de site web (pas Google Maps), on fetch le contenu
+  const isWebsite = url && !url.includes('maps.google') && !url.includes('goo.gl') && url.startsWith('http')
+  const pageContent = isWebsite ? await fetchPageContent(url) : ''
 
-Lieu recherché : "${searchQuery}"${url ? ` (URL: ${url})` : ''}
-${gmapsMatch ? `Coordonnées GPS dans l'URL : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : ''}
+  const prompt = `Reponds UNIQUEMENT avec un objet JSON valide. Aucun texte avant ou après. Aucun markdown. Aucun backtick.
 
-JSON requis (utilise null pour les champs inconnus) :
-{"name":"nom exact du lieu","country":"pays en français","city":"ville","address":"adresse complète ou null","description":"2-3 phrases de description ou null","categorie":"restaurant|cafe|hotel|musee|nature|plage|shop|sport|monument|spa|autre","tags":["tag1","tag2"],"gps_lat":"latitude décimale ou null","gps_lng":"longitude décimale ou null","phone":"numéro de téléphone avec indicatif pays ou null","whatsapp":"numéro WhatsApp avec indicatif pays ou null","website":"URL complète avec https:// ou null"}`
+Lieu : "${searchQuery}"${url ? ` (URL: ${url})` : ''}
+${gmapsMatch ? `GPS : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : ''}
+${pageContent ? `\nContenu du site web :\n${pageContent}` : ''}
+
+Extrais toutes les informations disponibles et réponds avec ce JSON :
+{"name":"nom exact","country":"pays en français","city":"ville","address":"adresse complète ou null","description":"2-3 phrases ou null","categorie":"restaurant|cafe|hotel|musee|nature|plage|shop|sport|monument|spa|autre","tags":["tag1","tag2"],"gps_lat":"latitude ou null","gps_lng":"longitude ou null","phone":"numéro tel avec indicatif ou null","whatsapp":"numéro WhatsApp avec indicatif ou null","website":"URL officielle avec https:// ou null"}`
 
   try {
     const response = await fetch(
@@ -29,11 +56,7 @@ JSON requis (utilise null pour les champs inconnus) :
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0,
-            maxOutputTokens: 1024,
-            responseMimeType: 'application/json',
-          },
+          generationConfig: { temperature: 0, maxOutputTokens: 1024 },
         }),
       }
     )
@@ -46,11 +69,17 @@ JSON requis (utilise null pour les champs inconnus) :
     const data = await response.json()
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
 
-    // Extraire le JSON même s'il est entouré de texte
+    // Parsing robuste
+    let lieu = null
     const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) throw new Error('Aucun JSON dans la réponse')
-
-    const lieu = JSON.parse(jsonMatch[0])
+    if (jsonMatch) {
+      try { lieu = JSON.parse(jsonMatch[0]) } catch {}
+    }
+    if (!lieu) {
+      const clean = text.replace(/```json|```/g, '').trim()
+      try { lieu = JSON.parse(clean) } catch {}
+    }
+    if (!lieu) throw new Error('Aucun JSON dans la réponse')
 
     if (gmapsMatch && !lieu.gps_lat) {
       lieu.gps_lat = gmapsMatch[1]
@@ -64,7 +93,6 @@ JSON requis (utilise null pour les champs inconnus) :
     }
 
     lieu.photos = []
-
     return NextResponse.json({ lieu })
 
   } catch (e) {
