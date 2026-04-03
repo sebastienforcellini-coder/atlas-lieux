@@ -226,7 +226,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
         <div className="serif" style={{ fontSize: 22, fontStyle: 'italic', fontWeight: 300 }}>
           {isEdit ? 'Modifier — ' + form.name : 'Nouveau lieu'}
         </div>
-        {!isEdit && (
+        {(
           <button className="btn btn-sm" type="button" onClick={() => setShowImport(s => !s)}>
             🔗 Importer depuis un lien
           </button>
