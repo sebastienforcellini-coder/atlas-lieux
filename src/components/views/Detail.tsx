@@ -61,7 +61,8 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
     const parts: string[] = []
     parts.push(lieu.name)
     parts.push(lieu.city + ', ' + lieu.country)
-    if (lieu.address) parts.push(lieu.address)
+    if (lieu.address) parts.push('🏠 ' + lieu.address)
+    if (lieu.gps_lat && lieu.gps_lng) parts.push('📍 https://maps.google.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng)
     if (lieu.description) parts.push(lieu.description.slice(0, 200))
     if (lieu.tags?.length) parts.push(lieu.tags.join(' · '))
     return parts.filter(Boolean).join('\n')
