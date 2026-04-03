@@ -61,8 +61,8 @@ export async function POST(req: NextRequest) {
 
   const prompt = `Reponds UNIQUEMENT avec un objet JSON valide. Aucun texte avant ou après. Aucun markdown. Aucun backtick.
 
-Lieu : "${searchQuery}"${url ? ` (URL: ${url})` : ''}
-${gmapsMatch ? `GPS : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : ''}
+Lieu : "${searchQuery}"
+Recherche activement le numéro de téléphone, WhatsApp et le site web officiel de ce lieu.${gmapsMatch ? `GPS : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : ''}
 ${pageContent ? `\nContenu du site web :\n${pageContent}` : ''}
 
 Extrais toutes les informations disponibles et réponds avec ce JSON :
@@ -93,7 +93,9 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
     }
 
     const data = await response.json()
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    // Après : on cherche le part qui contient du texte
+    const parts = data.candidates?.[0]?.content?.parts || []
+    const text = parts.map((p: { text?: string }) => p.text || '').join('\n')
 
     // Log pour debug (visible dans Vercel logs)
     console.log('Gemini raw response:', text.slice(0, 500))
