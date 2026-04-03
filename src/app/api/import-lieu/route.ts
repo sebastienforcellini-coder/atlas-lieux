@@ -81,6 +81,7 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { temperature: 0, maxOutputTokens: 1024 },
+          tools: [{ google_search: {} }],
         }),
       }
     )
