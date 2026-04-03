@@ -70,7 +70,7 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
 
   try {
   // ✅ gemini-2.5-flash : compte payant niveau 1 (254€ crédits)
-    const GEMINI_MODEL = 'gemini-2.5-flash-preview-04-17'
+    const GEMINI_MODEL = 'gemini-2.0-flash'
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
