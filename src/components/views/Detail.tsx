@@ -210,8 +210,9 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
             : <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {lieu.videos.map((u, i) => {
                   const em = ytEmbed(u)
-                  const domain = (() => { try { return new URL(u).hostname.replace('www.', '') } catch { return u } })()
-                  const fullUrl = u.startsWith('http') ? u : 'https://' + u
+                  const isUrl = u.startsWith('http') || u.startsWith('www.')
+                  const fullUrl = isUrl ? (u.startsWith('http') ? u : 'https://' + u) : `https://www.google.com/search?q=${encodeURIComponent(u)}`
+                  const domain = (() => { try { return new URL(fullUrl).hostname.replace('www.', '') } catch { return u } })()
                   if (editingLink?.index === i) {
                     return (
                       <div key={i} style={{ display: 'flex', gap: 8 }}>
