@@ -16,17 +16,38 @@ async function fetchPageContent(url: string): Promise<string> {
     })
     if (!res.ok) return ''
     const html = await res.text()
-    // Extraire le texte brut en supprimant les balises HTML
     const text = html
       .replace(/<script[\s\S]*?<\/script>/gi, '')
       .replace(/<style[\s\S]*?<\/style>/gi, '')
       .replace(/<[^>]+>/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
-      .slice(0, 4000) // Limiter pour ne pas dépasser les tokens
+      .slice(0, 4000)
     return text
   } catch {
     return ''
+  }
+}
+
+// Fallback geocoding via Nominatim (OpenStreetMap, gratuit, pas de clé)
+async function geocodeAddress(query: string): Promise<{ lat: string; lng: string } | null> {
+  try {
+    const encoded = encodeURIComponent(query)
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`,
+      {
+        headers: { 'User-Agent': 'Atlas-Lieux/1.0' },
+        signal: AbortSignal.timeout(5000),
+      }
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    if (data?.[0]?.lat && data?.[0]?.lon) {
+      return { lat: String(data[0].lat), lng: String(data[0].lon) }
+    }
+    return null
+  } catch {
+    return null
   }
 }
 
@@ -35,7 +56,6 @@ export async function POST(req: NextRequest) {
   const gmapsMatch = url?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
   const searchQuery = extractSearchQuery(url || '', query)
 
-  // Si c'est une URL de site web (pas Google Maps), on fetch le contenu
   const isWebsite = url && !url.includes('maps.google') && !url.includes('goo.gl') && url.startsWith('http')
   const pageContent = isWebsite ? await fetchPageContent(url) : ''
 
@@ -46,11 +66,14 @@ ${gmapsMatch ? `GPS : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : ''}
 ${pageContent ? `\nContenu du site web :\n${pageContent}` : ''}
 
 Extrais toutes les informations disponibles et réponds avec ce JSON :
-{"name":"nom exact","country":"pays en français","city":"ville","address":"adresse complète ou null","description":"2-3 phrases ou null","categorie":"restaurant|cafe|hotel|musee|nature|plage|shop|sport|monument|spa|autre","tags":["tag1","tag2"],"gps_lat":"latitude ou null","gps_lng":"longitude ou null","phone":"numéro tel avec indicatif ou null","whatsapp":"numéro WhatsApp avec indicatif ou null","website":"URL officielle avec https:// ou null"}`
+{"name":"nom exact","country":"pays en français","city":"ville","address":"adresse complète ou null","description":"2-3 phrases ou null","categorie":"restaurant|cafe|hotel|musee|nature|plage|shop|sport|monument|spa|autre","tags":["tag1","tag2"],"gps_lat":"latitude décimale en string ou null","gps_lng":"longitude décimale en string ou null","phone":"numéro tel avec indicatif ou null","whatsapp":"numéro WhatsApp avec indicatif ou null","website":"URL officielle avec https:// ou null"}`
 
   try {
+  // ✅ gemini-2.5-flash : compte payant niveau 1 (254€ crédits)
+    const GEMINI_MODEL = 'gemini-2.5-flash-preview-04-17'
+
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,11 +86,15 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
 
     if (!response.ok) {
       const errText = await response.text()
+      console.error(`Gemini API ${response.status}:`, errText)
       throw new Error(`Gemini API ${response.status}: ${errText}`)
     }
 
     const data = await response.json()
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+
+    // Log pour debug (visible dans Vercel logs)
+    console.log('Gemini raw response:', text.slice(0, 500))
 
     // Parsing robuste
     let lieu = null
@@ -79,11 +106,25 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
       const clean = text.replace(/```json|```/g, '').trim()
       try { lieu = JSON.parse(clean) } catch {}
     }
-    if (!lieu) throw new Error('Aucun JSON dans la réponse')
+    if (!lieu) throw new Error('Aucun JSON dans la réponse Gemini')
 
+    // GPS depuis l'URL Google Maps (prioritaire)
     if (gmapsMatch && !lieu.gps_lat) {
       lieu.gps_lat = gmapsMatch[1]
       lieu.gps_lng = gmapsMatch[2]
+    }
+
+    // Fallback geocoding si toujours pas de GPS
+    if (!lieu.gps_lat && (lieu.address || (lieu.name && lieu.city))) {
+      const geocodeQuery = lieu.address
+        ? `${lieu.address}, ${lieu.city || ''}, ${lieu.country || ''}`
+        : `${lieu.name}, ${lieu.city}, ${lieu.country || ''}`
+      const coords = await geocodeAddress(geocodeQuery)
+      if (coords) {
+        lieu.gps_lat = coords.lat
+        lieu.gps_lng = coords.lng
+        console.log('GPS récupéré via Nominatim:', coords)
+      }
     }
 
     // Nettoyer website
@@ -96,7 +137,7 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
     return NextResponse.json({ lieu })
 
   } catch (e) {
-    console.error('Gemini API error:', e)
+    console.error('Import IA error:', e)
     return NextResponse.json({
       error: 'Analyse impossible. Attendez 10 secondes et réessayez, ou utilisez le mode "Par nom" avec le nom complet + ville.'
     }, { status: 500 })
