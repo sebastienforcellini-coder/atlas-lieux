@@ -98,23 +98,22 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
     // Log pour debug (visible dans Vercel logs)
     console.log('Gemini raw response:', text.slice(0, 500))
 
-    // Parsing robuste
-    let lieu = null
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (jsonMatch) {
-      try { lieu = JSON.parse(jsonMatch[0]) } catch {}
-    }
-    if (!lieu) {
-      const clean = text.replace(/```json|```/g, '').trim()
-      try { lieu = JSON.parse(clean) } catch {}
-    }
-    if (!lieu) throw new Error('Aucun JSON dans la réponse Gemini')
-
-    // GPS depuis l'URL Google Maps (prioritaire)
-    if (gmapsMatch && !lieu.gps_lat) {
-      lieu.gps_lat = gmapsMatch[1]
-      lieu.gps_lng = gmapsMatch[2]
-    }
+   // Parsing robuste
+let lieu = null
+// Nettoyer les backticks markdown en premier
+const cleaned = text
+  .replace(/```json\s*/gi, '')
+  .replace(/```\s*/gi, '')
+  .trim()
+// Extraire le JSON
+const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+if (jsonMatch) {
+  try { lieu = JSON.parse(jsonMatch[0]) } catch {}
+}
+if (!lieu) {
+  try { lieu = JSON.parse(cleaned) } catch {}
+}
+if (!lieu) throw new Error('Aucun JSON dans la réponse Gemini')
 
     // Fallback geocoding si toujours pas de GPS
     if (!lieu.gps_lat && (lieu.address || (lieu.name && lieu.city))) {
