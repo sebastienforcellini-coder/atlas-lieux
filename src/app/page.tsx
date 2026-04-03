@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Stars } from '@/components/UI'
 import { getCat } from '@/types'
-import type { Lieu, Collection as CollectionType } from '@/types'
+import type { Lieu } from '@/types'
 
 interface Collection {
   id: number
