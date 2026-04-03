@@ -375,7 +375,23 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
         </div>
         <div>
           <div className="label">Téléphone</div>
-          <input className="field-input" value={form.phone ?? ''} onChange={e => up('phone', e.target.value)} placeholder="+33 1 23 45 67 89" />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input className="field-input" value={form.phone ?? ''} onChange={e => up('phone', e.target.value)} placeholder="+33 1 23 45 67 89" style={{ flex: 1 }} />
+            <a
+              href={`https://www.google.com/search?q=${encodeURIComponent(`téléphone ${form.name || ''} ${form.city || ''}`.trim())}`}
+              target="_blank" rel="noopener"
+              title="Chercher le numéro sur Google"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 8, fontSize: 12, border: '1px solid var(--line2)', background: 'var(--bg)', color: 'var(--mid)', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              🔍
+            </a>
+            <a
+              href={`https://maps.google.com/?q=${encodeURIComponent(`${form.name || ''} ${form.city || ''}`.trim())}`}
+              target="_blank" rel="noopener"
+              title="Voir sur Google Maps"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 8, fontSize: 12, border: '1px solid var(--line2)', background: 'var(--bg)', color: 'var(--mid)', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              🗺
+            </a>
+          </div>
         </div>
         <div>
           <div className="label">WhatsApp</div>
