@@ -22,7 +22,10 @@ export async function POST(req: NextRequest) {
   "categorie": "restaurant|cafe|hotel|musee|nature|plage|shop|sport|monument|autre",
   "tags": ["tag1", "tag2"],
   "gps_lat": "latitude decimale ou null",
-  "gps_lng": "longitude decimale ou null"
+  "gps_lng": "longitude decimale ou null",
+  "phone": "numero de telephone avec indicatif ou null",
+  "whatsapp": "numero whatsapp avec indicatif ou null",
+  "website": "URL complete du site officiel avec https:// ou null"
 }`
 
   const prompt = `Tu es un expert en lieux touristiques. Donne toutes les informations que tu connais sur ce lieu : "${searchQuery}"${url ? ` (URL: ${url})` : ''}.
@@ -65,6 +68,12 @@ ${jsonSchema}`
       lieu.gps_lng = gmapsMatch[2]
     }
     lieu.photos = []
+
+    // Nettoyer website : ajouter https:// si manquant, supprimer si invalide
+    if (lieu.website) {
+      if (!lieu.website.startsWith('http')) lieu.website = 'https://' + lieu.website
+      try { new URL(lieu.website) } catch { lieu.website = null }
+    }
 
     return NextResponse.json({ lieu })
 
