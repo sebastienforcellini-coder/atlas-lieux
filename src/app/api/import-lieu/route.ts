@@ -105,7 +105,7 @@ Recherche activement le numéro de téléphone, WhatsApp et le site web officiel
 ${pageContent ? `\nContenu du site web :\n${pageContent}` : ''}
 
 Extrais toutes les informations disponibles et réponds avec ce JSON :
-{"name":"nom exact","country":"pays en français","city":"ville","address":"adresse complète ou null","description":"2-3 phrases ou null","categorie":"restaurant|cafe|hotel|musee|nature|plage|shop|sport|monument|spa|autre","tags":["tag1","tag2"],"gps_lat":"latitude décimale en string ou null","gps_lng":"longitude décimale en string ou null","phone":"numéro tel avec indicatif ou null","whatsapp":"numéro WhatsApp avec indicatif ou null","website":"URL officielle avec https:// ou null"}`
+{"name":"nom exact","country":"pays en français","city":"ville","address":"adresse complète ou null","description":"2-3 phrases ou null","categorie":"restaurant|cafe|hotel|musee|nature|plage|shop|sport|monument|spa|autre","tags":["tag1","tag2"],"gps_lat":null,"gps_lng":null,"phone":"numéro tel avec indicatif ou null","whatsapp":"numéro WhatsApp avec indicatif ou null","website":"URL officielle avec https:// ou null"}`
 
   try {
     // ✅ gemini-2.5-flash : compte payant niveau 1 (254€ crédits)
@@ -151,10 +151,14 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
     }
     if (!lieu) throw new Error('Aucun JSON dans la réponse Gemini')
 
-    // GPS depuis l'URL Google Maps (prioritaire)
-    if (gmapsMatch && !lieu.gps_lat) {
+    // GPS depuis l'URL Google Maps (prioritaire absolu)
+    if (gmapsMatch) {
       lieu.gps_lat = gmapsMatch[1]
       lieu.gps_lng = gmapsMatch[2]
+    } else {
+      // On ignore le GPS de Gemini (pas fiable) et on utilise Google Places
+      lieu.gps_lat = null
+      lieu.gps_lng = null
     }
 
     // GPS précis via Google Places API
