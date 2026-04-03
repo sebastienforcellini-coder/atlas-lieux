@@ -31,7 +31,6 @@ async function fetchPageContent(url: string): Promise<string> {
 
 // Fallback geocoding via Nominatim (OpenStreetMap, gratuit, pas de clé)
 async function geocodeAddress(name: string, city: string, address: string): Promise<{ lat: string; lng: string } | null> {
-  // Essaie plusieurs requêtes du plus précis au plus simple
   const queries = [
     `${name}, ${city}`,
     `${address}, ${city}`,
@@ -50,7 +49,6 @@ async function geocodeAddress(name: string, city: string, address: string): Prom
     } catch { continue }
   }
   return null
-}
 }
 
 export async function POST(req: NextRequest) {
@@ -71,8 +69,7 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
 {"name":"nom exact","country":"pays en français","city":"ville","address":"adresse complète ou null","description":"2-3 phrases ou null","categorie":"restaurant|cafe|hotel|musee|nature|plage|shop|sport|monument|spa|autre","tags":["tag1","tag2"],"gps_lat":"latitude décimale en string ou null","gps_lng":"longitude décimale en string ou null","phone":"numéro tel avec indicatif ou null","whatsapp":"numéro WhatsApp avec indicatif ou null","website":"URL officielle avec https:// ou null"}`
 
   try {
-  // ✅ gemini-2.5-flash : compte payant niveau 1 (254€ crédits)
-    // après :
+    // ✅ gemini-2.5-flash : compte payant niveau 1 (254€ crédits)
     const GEMINI_MODEL = 'gemini-2.5-flash'
 
     const response = await fetch(
@@ -95,33 +92,34 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
     }
 
     const data = await response.json()
-    // Après : on cherche le part qui contient du texte
     const parts = data.candidates?.[0]?.content?.parts || []
     const text = parts.map((p: { text?: string }) => p.text || '').join('\n')
 
-    // Log pour debug (visible dans Vercel logs)
     console.log('Gemini raw response:', text.slice(0, 500))
 
-   // Parsing robuste
-let lieu = null
-// Nettoyer les backticks markdown en premier
-const cleaned = text
-  .replace(/```json\s*/gi, '')
-  .replace(/```\s*/gi, '')
-  .trim()
-// Extraire le JSON
-const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
-if (jsonMatch) {
-  try { lieu = JSON.parse(jsonMatch[0]) } catch {}
-}
-if (!lieu) {
-  try { lieu = JSON.parse(cleaned) } catch {}
-}
-if (!lieu) throw new Error('Aucun JSON dans la réponse Gemini')
+    // Parsing robuste
+    let lieu = null
+    const cleaned = text
+      .replace(/```json\s*/gi, '')
+      .replace(/```\s*/gi, '')
+      .trim()
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      try { lieu = JSON.parse(jsonMatch[0]) } catch {}
+    }
+    if (!lieu) {
+      try { lieu = JSON.parse(cleaned) } catch {}
+    }
+    if (!lieu) throw new Error('Aucun JSON dans la réponse Gemini')
+
+    // GPS depuis l'URL Google Maps (prioritaire)
+    if (gmapsMatch && !lieu.gps_lat) {
+      lieu.gps_lat = gmapsMatch[1]
+      lieu.gps_lng = gmapsMatch[2]
+    }
 
     // Fallback geocoding si toujours pas de GPS
     if (!lieu.gps_lat && (lieu.address || (lieu.name && lieu.city))) {
-      
       const coords = await geocodeAddress(lieu.name || '', lieu.city || '', lieu.address || '')
       if (coords) {
         lieu.gps_lat = coords.lat
