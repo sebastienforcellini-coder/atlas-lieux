@@ -79,7 +79,7 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0, maxOutputTokens: 1024 },
+          generationConfig: { temperature: 0, maxOutputTokens: 2048 },
           tools: [{ google_search: {} }],
         }),
       }
@@ -95,7 +95,7 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
     const parts = data.candidates?.[0]?.content?.parts || []
     const text = parts.map((p: { text?: string }) => p.text || '').join('\n')
 
-    console.log('Gemini raw response:', text.slice(0, 500))
+    console.log('Gemini raw response:', text.slice(0, 1500))
 
     // Parsing robuste
     let lieu = null
