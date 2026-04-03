@@ -91,8 +91,22 @@ export default function GeoForm({ onNavigate }: Props) {
         </a>
       </div>
 
-      <div style={{ display: 'flex', gap: 10 }}>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <button className="btn" onClick={() => onNavigate('home')}>Annuler</button>
+        <button
+          className="btn"
+          onClick={() => {
+            const url = `https://maps.google.com/?q=${geo!.gps_lat},${geo!.gps_lng}`
+            if (navigator.share) {
+              navigator.share({ title: 'Ma position', text: `Je suis ici : ${geo!.gps_lat}, ${geo!.gps_lng}`, url })
+            } else {
+              navigator.clipboard?.writeText(url)
+              alert('Lien copié dans le presse-papier !')
+            }
+          }}
+        >
+          🔗 Partager ma position
+        </button>
         <button
           className="btn btn-primary"
           onClick={() => onNavigate('form', { editLieu: geo })}
