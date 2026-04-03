@@ -29,6 +29,45 @@ async function fetchPageContent(url: string): Promise<string> {
   }
 }
 
+// GPS précis via Google Places API (New)
+async function getPlacesGps(query: string): Promise<{ lat: string; lng: string } | null> {
+  try {
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY
+    if (!apiKey) return null
+
+    const res = await fetch(
+      `https://places.googleapis.com/v1/places:searchText`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'places.location,places.displayName',
+        },
+        body: JSON.stringify({ textQuery: query }),
+        signal: AbortSignal.timeout(5000),
+      }
+    )
+    if (!res.ok) {
+      console.error('Places API error:', res.status, await res.text())
+      return null
+    }
+    const data = await res.json()
+    const place = data.places?.[0]
+    if (place?.location?.latitude) {
+      console.log('GPS via Google Places:', place.location)
+      return {
+        lat: String(place.location.latitude),
+        lng: String(place.location.longitude),
+      }
+    }
+    return null
+  } catch (e) {
+    console.error('Places API exception:', e)
+    return null
+  }
+}
+
 // Fallback geocoding via Nominatim (OpenStreetMap, gratuit, pas de clé)
 async function geocodeAddress(name: string, city: string, address: string): Promise<{ lat: string; lng: string } | null> {
   const queries = [
@@ -118,7 +157,17 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
       lieu.gps_lng = gmapsMatch[2]
     }
 
-    // Fallback geocoding si toujours pas de GPS
+    // GPS précis via Google Places API
+    if (!lieu.gps_lat && lieu.name) {
+      const placesQuery = `${lieu.name} ${lieu.city || ''} ${lieu.country || ''}`.trim()
+      const coords = await getPlacesGps(placesQuery)
+      if (coords) {
+        lieu.gps_lat = coords.lat
+        lieu.gps_lng = coords.lng
+      }
+    }
+
+    // Fallback Nominatim si Places API n'a rien trouvé
     if (!lieu.gps_lat && (lieu.address || (lieu.name && lieu.city))) {
       const coords = await geocodeAddress(lieu.name || '', lieu.city || '', lieu.address || '')
       if (coords) {
