@@ -12,6 +12,7 @@ interface Props {
 
 export default function Home({ lieux, onNavigate, onDelete }: Props) {
   const [tab, setTab] = useState<'pays' | 'villes' | 'recent'>('pays')
+  const [locating, setLocating] = useState(false)
 
   const countries = uniq(lieux.map(l => l.country)).sort()
   const cityCount  = uniq(lieux.map(l => l.city)).length
@@ -22,9 +23,30 @@ export default function Home({ lieux, onNavigate, onDelete }: Props) {
     return { city, country, count: lieux.filter(l => l.city === city && l.country === country).length }
   })
 
+  const handleSharePosition = () => {
+    if (!navigator.geolocation) { alert('Géolocalisation non supportée'); return }
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false)
+        const lat = pos.coords.latitude.toFixed(6)
+        const lng = pos.coords.longitude.toFixed(6)
+        const url = `https://maps.google.com/?q=${lat},${lng}`
+        if (navigator.share) {
+          navigator.share({ title: 'Ma position', text: `Je suis ici : ${lat}, ${lng}`, url })
+        } else {
+          navigator.clipboard?.writeText(url)
+          alert('Lien copié dans le presse-papier !')
+        }
+      },
+      () => { setLocating(false); alert('Position indisponible') },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
+
   return (
     <div>
-      {/* Hero logo — visible mobile et desktop */}
+      {/* Hero logo */}
       <div style={{ textAlign: 'center', padding: '2rem 0 1.5rem', borderBottom: '1px solid var(--line)', marginBottom: '1.5rem' }}>
         <img src="/favicon.svg" alt="Atlas" style={{ width: 72, height: 72, margin: '0 auto 12px', display: 'block' }} />
         <div className="serif" style={{ fontSize: 32, fontStyle: 'italic', fontWeight: 300, color: 'var(--text)', lineHeight: 1 }}>Atlas</div>
@@ -34,8 +56,8 @@ export default function Home({ lieux, onNavigate, onDelete }: Props) {
           <button className="btn btn-accent" onClick={() => onNavigate('form', { editLieu: null })} style={{ fontSize: 13 }}>
             + Nouvelle fiche
           </button>
-          <button className="btn" onClick={() => onNavigate('geoform')} style={{ fontSize: 13 }}>
-            📍 Ma position
+          <button className="btn" onClick={handleSharePosition} disabled={locating} style={{ fontSize: 13 }}>
+            {locating ? '⏳ Localisation...' : '📍 Ma position'}
           </button>
         </div>
       </div>
@@ -120,14 +142,7 @@ export function LieuCard({ lieu, onClick, onDelete }: { lieu: Lieu; onClick: () 
         {onDelete && (
           <button
             onClick={e => { e.stopPropagation(); if (confirm('Supprimer "' + lieu.name + '" ?')) onDelete(lieu.id) }}
-            style={{
-              position: 'absolute', bottom: 8, right: 8,
-              background: 'rgba(253,252,250,.92)', border: 'none',
-              borderRadius: 100, width: 26, height: 26,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 13, color: '#C0392B', cursor: 'pointer',
-              fontWeight: 600, lineHeight: 1,
-            }}
+            style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(253,252,250,.92)', border: 'none', borderRadius: 100, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#C0392B', cursor: 'pointer', fontWeight: 600, lineHeight: 1 }}
             title="Supprimer"
           >✕</button>
         )}
