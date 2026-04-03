@@ -50,6 +50,7 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
   const [lb, setLb] = useState<number | null>(null)
   const [newComment, setNewComment] = useState('')
   const [saving, setSaving] = useState(false)
+  const [editingLink, setEditingLink] = useState<{index: number, value: string} | null>(null)
 
   const cmts = lieu.comments ?? []
   const gpsLink = lieu.gps_lat && lieu.gps_lng ? 'https://maps.google.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng : null
@@ -177,6 +178,16 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
             )}
             {lieu.visit_date && <span className="pill">🗓 Visite le {fd(lieu.visit_date)}</span>}
             {lieu.address && <span className="pill">🏠 {lieu.address}</span>}
+            {(lieu as any).phone && (
+              <a href={`tel:${(lieu as any).phone}`} className="pill" style={{ textDecoration: 'none', color: 'var(--text)' }}>
+                📞 {(lieu as any).phone}
+              </a>
+            )}
+            {(lieu as any).whatsapp && (
+              <a href={`https://wa.me/${(lieu as any).whatsapp.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener" className="pill" style={{ textDecoration: 'none', color: '#25D366' }}>
+                💬 WhatsApp
+              </a>
+            )}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 12 }}>
             {lieu.tags?.map(t => <span key={t} className="tag">{t}</span>)}
@@ -200,17 +211,41 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
                 {lieu.videos.map((u, i) => {
                   const em = ytEmbed(u)
                   const domain = (() => { try { return new URL(u).hostname.replace('www.', '') } catch { return u } })()
+                  const fullUrl = u.startsWith('http') ? u : 'https://' + u
+                  if (editingLink?.index === i) {
+                    return (
+                      <div key={i} style={{ display: 'flex', gap: 8 }}>
+                        <input className="field-input" value={editingLink.value} onChange={e => setEditingLink({ index: i, value: e.target.value })} style={{ flex: 1 }} autoFocus />
+                        <button className="btn btn-sm btn-accent" onClick={async () => {
+                          const updated = lieu.videos.map((v, j) => j === i ? editingLink.value : v)
+                          await onUpdate(lieu.id, { videos: updated })
+                          setEditingLink(null)
+                        }}>✓</button>
+                        <button className="btn btn-sm" onClick={() => setEditingLink(null)}>✕</button>
+                      </div>
+                    )
+                  }
                   return em
-                    ? <iframe key={i} width="100%" height="240" src={em} frameBorder="0" allowFullScreen style={{ borderRadius: 8, border: '1px solid var(--line)' }} />
-                    : <a key={i} href={u} target="_blank" rel="noopener"
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'var(--bg2)', borderRadius: 10, border: '1px solid var(--line)', textDecoration: 'none', color: 'var(--text)' }}>
-                        <span style={{ fontSize: 20 }}>🔗</span>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--accent)' }}>{domain}</div>
-                          <div style={{ fontSize: 11, color: 'var(--soft)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 280 }}>{u}</div>
+                    ? (
+                      <div key={i} style={{ position: 'relative' }}>
+                        <iframe width="100%" height="240" src={em} frameBorder="0" allowFullScreen style={{ borderRadius: 8, border: '1px solid var(--line)', display: 'block' }} />
+                        <div style={{ display: 'flex', gap: 6, marginTop: 6, justifyContent: 'flex-end' }}>
+                          <button className="btn btn-sm" onClick={() => setEditingLink({ index: i, value: u })} style={{ fontSize: 11 }}>✏️ Modifier</button>
+                          <button className="btn btn-sm btn-danger" onClick={async () => { await onUpdate(lieu.id, { videos: lieu.videos.filter((_, j) => j !== i) }) }} style={{ fontSize: 11 }}>🗑 Supprimer</button>
                         </div>
-                        <span style={{ marginLeft: 'auto', color: 'var(--soft)', fontSize: 12 }}>→</span>
-                      </a>
+                      </div>
+                    )
+                    : (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'var(--bg2)', borderRadius: 10, border: '1px solid var(--line)' }}>
+                        <span style={{ fontSize: 20 }}>🔗</span>
+                        <a href={fullUrl} target="_blank" rel="noopener" style={{ flex: 1, textDecoration: 'none', color: 'var(--text)', minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--accent)' }}>{domain}</div>
+                          <div style={{ fontSize: 11, color: 'var(--soft)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u}</div>
+                        </a>
+                        <button className="btn btn-sm" onClick={() => setEditingLink({ index: i, value: u })} style={{ fontSize: 11, flexShrink: 0 }}>✏️</button>
+                        <button className="btn btn-sm btn-danger" onClick={async () => { await onUpdate(lieu.id, { videos: lieu.videos.filter((_, j) => j !== i) }) }} style={{ fontSize: 11, flexShrink: 0 }}>🗑</button>
+                      </div>
+                    )
                 })}
               </div>
           }

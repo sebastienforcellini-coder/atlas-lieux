@@ -18,6 +18,8 @@ export interface Lieu {
   slug: string | null
   categorie: string
   favori: boolean
+  phone: string | null
+  whatsapp: string | null
 }
 
 export const CATEGORIES: { id: string; label: string; icon: string }[] = [

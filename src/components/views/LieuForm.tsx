@@ -10,7 +10,7 @@ import { reverseGeocode } from '@/lib/geocode'
 const EMPTY: LieuInput = {
   name: '', country: '', city: '', address: '', description: '',
   photos: [], videos: [], tags: [], gps_lat: '', gps_lng: '',
-  rating: 0, visit_date: '', comments: [], slug: null, categorie: 'autre', favori: false,
+  rating: 0, visit_date: '', comments: [], slug: null, categorie: 'autre', favori: false, phone: '', whatsapp: '',
 }
 
 interface Props {
@@ -226,7 +226,7 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
         <div className="serif" style={{ fontSize: 22, fontStyle: 'italic', fontWeight: 300 }}>
           {isEdit ? 'Modifier — ' + form.name : 'Nouveau lieu'}
         </div>
-        {(
+        {!isEdit && (
           <button className="btn btn-sm" type="button" onClick={() => setShowImport(s => !s)}>
             🔗 Importer depuis un lien
           </button>
@@ -372,6 +372,14 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
         <div style={{ gridColumn: '1/-1' }}>
           <div className="label">Adresse</div>
           <input className="field-input" value={form.address ?? ''} onChange={e => up('address', e.target.value)} placeholder="12 derb Bab Doukkala" />
+        </div>
+        <div>
+          <div className="label">Téléphone</div>
+          <input className="field-input" value={form.phone ?? ''} onChange={e => up('phone', e.target.value)} placeholder="+33 1 23 45 67 89" />
+        </div>
+        <div>
+          <div className="label">WhatsApp</div>
+          <input className="field-input" value={form.whatsapp ?? ''} onChange={e => up('whatsapp', e.target.value)} placeholder="+33 6 12 34 56 78" />
         </div>
         <div style={{ gridColumn: '1/-1' }}>
           <div className="label">Description / Notes</div>
