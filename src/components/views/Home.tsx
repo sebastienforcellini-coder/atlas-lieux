@@ -12,6 +12,7 @@ interface Props {
 
 export default function Home({ lieux, onNavigate, onDelete }: Props) {
   const [tab, setTab] = useState<'pays' | 'villes' | 'recent'>('pays')
+  const [showPosMenu, setShowPosMenu] = useState(false)
   const [locating, setLocating] = useState(false)
 
   const countries = uniq(lieux.map(l => l.country)).sort()
@@ -26,6 +27,7 @@ export default function Home({ lieux, onNavigate, onDelete }: Props) {
   const handleSharePosition = () => {
     if (!navigator.geolocation) { alert('Géolocalisation non supportée'); return }
     setLocating(true)
+    setShowPosMenu(false)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocating(false)
@@ -46,6 +48,49 @@ export default function Home({ lieux, onNavigate, onDelete }: Props) {
 
   return (
     <div>
+      {/* Menu position overlay */}
+      {showPosMenu && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(26,24,20,.5)', zIndex: 500, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          onClick={() => setShowPosMenu(false)}
+        >
+          <div
+            style={{ background: 'var(--white)', borderRadius: '16px 16px 0 0', padding: '16px 16px 32px', width: '100%', maxWidth: 480 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ width: 36, height: 4, background: 'var(--line2)', borderRadius: 2, margin: '0 auto 16px' }} />
+            <div style={{ fontSize: 12, color: 'var(--soft)', textAlign: 'center', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>Ma position</div>
+            <button
+              onClick={() => { setShowPosMenu(false); onNavigate('geoform') }}
+              style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 10, border: '1px solid var(--line)', marginBottom: 8, background: 'var(--bg)', width: '100%', cursor: 'pointer', fontSize: 15, color: 'var(--text)' }}
+            >
+              <span style={{ fontSize: 24 }}>📍</span>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontWeight: 300 }}>Créer une fiche ici</div>
+                <div style={{ fontSize: 11, color: 'var(--soft)', marginTop: 2 }}>Ouvre le formulaire avec votre position pré-remplie</div>
+              </div>
+            </button>
+            <button
+              onClick={handleSharePosition}
+              disabled={locating}
+              style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 10, border: '1px solid var(--line)', marginBottom: 8, background: 'var(--bg)', width: '100%', cursor: 'pointer', fontSize: 15, color: 'var(--text)' }}
+            >
+              <span style={{ fontSize: 24 }}>🔗</span>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontWeight: 300 }}>{locating ? '⏳ Localisation...' : 'Partager ma position'}</div>
+                <div style={{ fontSize: 11, color: 'var(--soft)', marginTop: 2 }}>Envoie un lien Google Maps à quelqu'un</div>
+              </div>
+            </button>
+            <button
+              onClick={() => setShowPosMenu(false)}
+              style={{ width: '100%', padding: '12px', border: '1px solid var(--line2)', borderRadius: 10, background: 'var(--bg)', color: 'var(--mid)', cursor: 'pointer', fontSize: 14, marginTop: 4 }}
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Hero logo */}
       <div style={{ textAlign: 'center', padding: '2rem 0 1.5rem', borderBottom: '1px solid var(--line)', marginBottom: '1.5rem' }}>
         <img src="/favicon.svg" alt="Atlas" style={{ width: 72, height: 72, margin: '0 auto 12px', display: 'block' }} />
@@ -56,8 +101,8 @@ export default function Home({ lieux, onNavigate, onDelete }: Props) {
           <button className="btn btn-accent" onClick={() => onNavigate('form', { editLieu: null })} style={{ fontSize: 13 }}>
             + Nouvelle fiche
           </button>
-          <button className="btn" onClick={handleSharePosition} disabled={locating} style={{ fontSize: 13 }}>
-            {locating ? '⏳ Localisation...' : '📍 Ma position'}
+          <button className="btn" onClick={() => setShowPosMenu(true)} style={{ fontSize: 13 }}>
+            📍 Ma position
           </button>
         </div>
       </div>
