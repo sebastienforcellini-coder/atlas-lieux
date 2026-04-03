@@ -30,25 +30,27 @@ async function fetchPageContent(url: string): Promise<string> {
 }
 
 // Fallback geocoding via Nominatim (OpenStreetMap, gratuit, pas de clé)
-async function geocodeAddress(query: string): Promise<{ lat: string; lng: string } | null> {
-  try {
-    const encoded = encodeURIComponent(query)
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`,
-      {
-        headers: { 'User-Agent': 'Atlas-Lieux/1.0' },
-        signal: AbortSignal.timeout(5000),
-      }
-    )
-    if (!res.ok) return null
-    const data = await res.json()
-    if (data?.[0]?.lat && data?.[0]?.lon) {
-      return { lat: String(data[0].lat), lng: String(data[0].lon) }
-    }
-    return null
-  } catch {
-    return null
+async function geocodeAddress(name: string, city: string, address: string): Promise<{ lat: string; lng: string } | null> {
+  // Essaie plusieurs requêtes du plus précis au plus simple
+  const queries = [
+    `${name}, ${city}`,
+    `${address}, ${city}`,
+    `${name} ${city}`,
+  ].filter(Boolean)
+
+  for (const q of queries) {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,
+        { headers: { 'User-Agent': 'Atlas-Lieux/1.0', 'Accept-Language': 'fr' }, signal: AbortSignal.timeout(4000) }
+      )
+      if (!res.ok) continue
+      const data = await res.json()
+      if (data?.[0]?.lat) return { lat: String(data[0].lat), lng: String(data[0].lon) }
+    } catch { continue }
   }
+  return null
+}
 }
 
 export async function POST(req: NextRequest) {
@@ -119,10 +121,8 @@ if (!lieu) throw new Error('Aucun JSON dans la réponse Gemini')
 
     // Fallback geocoding si toujours pas de GPS
     if (!lieu.gps_lat && (lieu.address || (lieu.name && lieu.city))) {
-      const geocodeQuery = lieu.address
-        ? `${lieu.address}, ${lieu.city || ''}, ${lieu.country || ''}`
-        : `${lieu.name}, ${lieu.city}, ${lieu.country || ''}`
-      const coords = await geocodeAddress(geocodeQuery)
+      
+      const coords = await geocodeAddress(lieu.name || '', lieu.city || '', lieu.address || '')
       if (coords) {
         lieu.gps_lat = coords.lat
         lieu.gps_lng = coords.lng
