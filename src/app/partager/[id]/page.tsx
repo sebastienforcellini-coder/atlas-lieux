@@ -85,10 +85,9 @@ export default async function SharePage({ params }: Props) {
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: '1rem' }}>
           {gpsLink && (
-            <a href={gpsLink} target="_blank" rel="noopener"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, border: '1px solid rgba(26,24,20,.18)', borderRadius: 100, color: '#6B6560', textDecoration: 'none', background: '#fff' }}>
-              📍 {parseFloat(lieu.gps_lat!).toFixed(5)}°, {parseFloat(lieu.gps_lng!).toFixed(5)}° → Maps
-            </a>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, border: '1px solid rgba(26,24,20,.18)', borderRadius: 100, color: '#6B6560', background: '#fff' }}>
+              📍 {parseFloat(lieu.gps_lat!).toFixed(5)}°, {parseFloat(lieu.gps_lng!).toFixed(5)}°
+            </span>
           )}
           {lieu.visit_date && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, border: '1px solid rgba(26,24,20,.18)', borderRadius: 100, color: '#6B6560', background: '#fff' }}>
@@ -101,6 +100,26 @@ export default async function SharePage({ params }: Props) {
             </span>
           )}
         </div>
+
+        {gpsLink && (
+          <div style={{ marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: 11, color: '#B0AA9E', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Navigation</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              <a href={'https://maps.google.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng} target="_blank" rel="noopener"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 13, border: '1px solid rgba(26,24,20,.18)', borderRadius: 10, color: '#1A1814', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>
+                🗺 Google Maps
+              </a>
+              <a href={'https://maps.apple.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng + '&ll=' + lieu.gps_lat + ',' + lieu.gps_lng} target="_blank" rel="noopener"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 13, border: '1px solid rgba(26,24,20,.18)', borderRadius: 10, color: '#1A1814', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>
+                🍎 Plans
+              </a>
+              <a href={'https://waze.com/ul?ll=' + lieu.gps_lat + ',' + lieu.gps_lng + '&navigate=yes'} target="_blank" rel="noopener"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 13, border: '1px solid rgba(26,24,20,.18)', borderRadius: 10, color: '#1A1814', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>
+                🚗 Waze
+              </a>
+            </div>
+          </div>
+        )}
 
         {lieu.tags?.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: '1.25rem' }}>
