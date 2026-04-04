@@ -57,20 +57,9 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://atlas-lieux.vercel.app'
   const shareUrl = origin + '/partager/' + (lieu.slug || lieu.id)
 
-  const buildShareText = () => {
-    const parts: string[] = []
-    parts.push(lieu.name)
-    parts.push(lieu.city + ', ' + lieu.country)
-    if (lieu.address) parts.push('🏠 ' + lieu.address)
-    if (lieu.gps_lat && lieu.gps_lng) parts.push('📍 https://maps.google.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng)
-    if (lieu.description) parts.push(lieu.description.slice(0, 200))
-    if (lieu.tags?.length) parts.push(lieu.tags.join(' · '))
-    return parts.filter(Boolean).join('\n')
-  }
-
   const handleShare = async () => {
     if (navigator.share) {
-      try { await navigator.share({ title: lieu.name, text: buildShareText(), url: shareUrl }) } catch {}
+      try { await navigator.share({ title: lieu.name, url: shareUrl }) } catch {}
     } else {
       navigator.clipboard?.writeText(shareUrl)
       onShare('Lien copie dans le presse-papier !')
