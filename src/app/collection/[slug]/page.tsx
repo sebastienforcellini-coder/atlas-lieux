@@ -52,12 +52,12 @@ export default async function CollectionPage({ params }: Props) {
         {catsPresentes.length > 1 && (
           <>
             <div id="filter-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
-              <button id="filter-all" onclick="filterLieux('all')"
+              <button id="filter-all" onClick="filterLieux('all')"
                 style={{ padding: '6px 14px', borderRadius: 100, border: '1px solid #8C5A28', background: '#8C5A28', color: '#fff', fontSize: 12, cursor: 'pointer', fontFamily: 'system-ui, sans-serif' }}>
                 Tous
               </button>
               {catsPresentes.map(c => (
-                <button key={c.id} id={`filter-${c.id}`} onclick={`filterLieux('${c.id}')`}
+                <button key={c.id} id={`filter-${c.id}`} onClick={`filterLieux('${c.id}')`}
                   style={{ padding: '6px 14px', borderRadius: 100, border: '1px solid rgba(26,24,20,.2)', background: '#fff', color: '#6B6560', fontSize: 12, cursor: 'pointer', fontFamily: 'system-ui, sans-serif' }}>
                   {c.icon} {c.label}
                 </button>
