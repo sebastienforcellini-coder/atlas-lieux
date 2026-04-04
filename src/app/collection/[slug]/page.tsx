@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { Lieu } from '@/types'
+import { CATEGORIES } from '@/types'
 import type { Metadata } from 'next'
 
 interface Props { params: { slug: string } }
@@ -62,6 +63,7 @@ export default async function CollectionPage({ params }: Props) {
             const hasGps = !!(l.gps_lat && l.gps_lng)
             const phone = (l as any).phone
             const whatsapp = (l as any).whatsapp
+            const cat = CATEGORIES.find(c => c.id === l.categorie)
 
             return (
               <div key={l.id} style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(26,24,20,.08)' }}>
@@ -75,7 +77,14 @@ export default async function CollectionPage({ params }: Props) {
                 <div style={{ padding: '16px' }}>
                   {/* Nom + ville */}
                   <div style={{ fontStyle: 'italic', fontSize: 20, fontWeight: 300, marginBottom: 2 }}>{l.name}</div>
-                  <div style={{ fontSize: 12, color: '#6B6560', marginBottom: l.rating > 0 ? 6 : 10 }}>{l.city} · {l.country}</div>
+                  <div style={{ fontSize: 12, color: '#6B6560', marginBottom: 8 }}>{l.city} · {l.country}</div>
+
+                  {/* Badge catégorie */}
+                  {cat && (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', fontSize: 11, borderRadius: 100, background: '#FDF8F2', border: '1px solid rgba(140,90,40,.2)', color: '#8C5A28', marginBottom: 8, fontFamily: 'system-ui, sans-serif' }}>
+                      {cat.icon} {cat.label}
+                    </div>
+                  )}
 
                   {/* Note */}
                   {l.rating > 0 && (
