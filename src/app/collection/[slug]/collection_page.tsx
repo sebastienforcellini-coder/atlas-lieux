@@ -28,7 +28,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-function fd(d: string | null) { return d ? new Date(d).toLocaleDateString('fr-FR') : '' }
 function starsStr(n: number) { return '★'.repeat(n) + '☆'.repeat(5 - n) }
 
 export default async function CollectionPage({ params }: Props) {
@@ -106,7 +105,7 @@ export default async function CollectionPage({ params }: Props) {
 
                   {/* Navigation GPS */}
                   {hasGps && (
-                    <div style={{ marginBottom: phone || whatsapp ? 10 : 0 }}>
+                    <div style={{ marginBottom: 10 }}>
                       <div style={{ fontSize: 10, color: '#B0AA9E', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1.5 }}>Navigation</div>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {[
@@ -125,7 +124,7 @@ export default async function CollectionPage({ params }: Props) {
 
                   {/* Contact */}
                   {(phone || whatsapp) && (
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
                       {phone && (
                         <a href={`tel:${phone}`}
                           style={{ padding: '6px 12px', fontSize: 12, border: '1px solid rgba(26,24,20,.15)', borderRadius: 8, color: '#1A1814', textDecoration: 'none', background: '#F5F2ED', fontFamily: 'system-ui, sans-serif' }}>
@@ -140,6 +139,13 @@ export default async function CollectionPage({ params }: Props) {
                       )}
                     </div>
                   )}
+
+                  {/* Lien fiche complète */}
+                  <a href={`https://atlas-lieux.vercel.app/partager/${l.id}`}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 12, border: '1px solid rgba(140,90,40,.3)', borderRadius: 8, color: '#8C5A28', textDecoration: 'none', background: '#FDF8F2', fontFamily: 'system-ui, sans-serif', marginTop: 4 }}>
+                    Voir la fiche complète →
+                  </a>
+
                 </div>
               </div>
             )
