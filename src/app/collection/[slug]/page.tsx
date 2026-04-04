@@ -3,7 +3,10 @@ import type { Lieu } from '@/types'
 import { CATEGORIES } from '@/types'
 import type { Metadata } from 'next'
 
-interface Props { params: { slug: string } }
+interface Props {
+  params: { slug: string }
+  searchParams: { cat?: string }
+}
 
 async function getCollection(slug: string) {
   const { data } = await supabase.from('collections').select('*').eq('slug', slug).single()
@@ -18,13 +21,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: col.title + ' — Atlas',
     description: col.description || col.title + ' · ' + col.lieux_ids.length + ' lieux',
-    openGraph: { title: col.title + ' — Atlas', description: col.description || col.title + ' · ' + col.lieux_ids.length + ' lieux', siteName: 'Atlas — Répertoire de lieux', ...(firstPhoto ? { images: [{ url: firstPhoto, width: 1200, height: 630, alt: col.title }] } : {}) },
+    openGraph: { title: col.title + ' — Atlas', description: col.description || '', siteName: 'Atlas — Répertoire de lieux', ...(firstPhoto ? { images: [{ url: firstPhoto, width: 1200, height: 630, alt: col.title }] } : {}) },
   }
 }
 
 function starsStr(n: number) { return '★'.repeat(n) + '☆'.repeat(5 - n) }
 
-export default async function CollectionPage({ params }: Props) {
+export default async function CollectionPage({ params, searchParams }: Props) {
   const col = await getCollection(params.slug)
   if (!col) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F2ED', fontFamily: 'Georgia, serif' }}>
@@ -33,9 +36,17 @@ export default async function CollectionPage({ params }: Props) {
   )
 
   const { data: lieuxData } = await supabase.from('lieux').select('*').in('id', col.lieux_ids)
-  const lieux = (lieuxData || []) as Lieu[]
-  const catsPresentes = CATEGORIES.filter(c => lieux.some(l => l.categorie === c.id))
+  const allLieux = (lieuxData || []) as Lieu[]
+  const activeCat = searchParams.cat || 'all'
+  const lieux = activeCat === 'all' ? allLieux : allLieux.filter(l => l.categorie === activeCat)
+  const catsPresentes = CATEGORIES.filter(c => allLieux.some(l => l.categorie === c.id))
   const collectionUrl = `https://atlas-lieux.vercel.app/collection/${params.slug}`
+
+  const btnStyle = (active: boolean) => ({
+    padding: '6px 14px', borderRadius: 100 as const, border: `1px solid ${active ? '#8C5A28' : 'rgba(26,24,20,.2)'}`,
+    background: active ? '#8C5A28' : '#fff', color: active ? '#fff' : '#6B6560',
+    fontSize: 12, textDecoration: 'none', fontFamily: 'system-ui, sans-serif', display: 'inline-block',
+  })
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F2ED', fontFamily: 'Georgia, serif' }}>
@@ -45,37 +56,19 @@ export default async function CollectionPage({ params }: Props) {
           <div style={{ fontSize: 9, letterSpacing: 2, color: '#B0AA9E', textTransform: 'uppercase', marginBottom: 10 }}>Atlas — Collection</div>
           <div style={{ fontSize: '2rem', fontStyle: 'italic', fontWeight: 300, lineHeight: 1.2, marginBottom: 8 }}>{col.title}</div>
           {col.description && <p style={{ fontSize: 14, color: '#6B6560', margin: '0 0 8px' }}>{col.description}</p>}
-          <div style={{ fontSize: 11, color: '#B0AA9E' }}>{lieux.length} lieu{lieux.length !== 1 ? 'x' : ''}</div>
+          <div style={{ fontSize: 11, color: '#B0AA9E' }}>{allLieux.length} lieu{allLieux.length !== 1 ? 'x' : ''}</div>
         </div>
 
-        {/* Filtres par catégorie via JS vanilla */}
+        {/* Filtres par catégorie — liens URL côté serveur */}
         {catsPresentes.length > 1 && (
-          <>
-            <div id="filter-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
-              <button id="filter-all" onClick="filterLieux('all')"
-                style={{ padding: '6px 14px', borderRadius: 100, border: '1px solid #8C5A28', background: '#8C5A28', color: '#fff', fontSize: 12, cursor: 'pointer', fontFamily: 'system-ui, sans-serif' }}>
-                Tous
-              </button>
-              {catsPresentes.map(c => (
-                <button key={c.id} id={`filter-${c.id}`} onClick={`filterLieux('${c.id}')`}
-                  style={{ padding: '6px 14px', borderRadius: 100, border: '1px solid rgba(26,24,20,.2)', background: '#fff', color: '#6B6560', fontSize: 12, cursor: 'pointer', fontFamily: 'system-ui, sans-serif' }}>
-                  {c.icon} {c.label}
-                </button>
-              ))}
-            </div>
-            <script dangerouslySetInnerHTML={{ __html: `
-              function filterLieux(cat) {
-                document.querySelectorAll('[data-cat]').forEach(function(card) {
-                  card.style.display = (cat === 'all' || card.getAttribute('data-cat') === cat) ? 'block' : 'none';
-                });
-                document.querySelectorAll('[id^="filter-"]').forEach(function(btn) {
-                  btn.style.background = '#fff'; btn.style.color = '#6B6560'; btn.style.borderColor = 'rgba(26,24,20,.2)';
-                });
-                var active = document.getElementById('filter-' + cat);
-                if (active) { active.style.background = '#8C5A28'; active.style.color = '#fff'; active.style.borderColor = '#8C5A28'; }
-              }
-            `}} />
-          </>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
+            <a href={collectionUrl} style={btnStyle(activeCat === 'all')}>Tous</a>
+            {catsPresentes.map(c => (
+              <a key={c.id} href={`${collectionUrl}?cat=${c.id}`} style={btnStyle(activeCat === c.id)}>
+                {c.icon} {c.label}
+              </a>
+            ))}
+          </div>
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -85,7 +78,7 @@ export default async function CollectionPage({ params }: Props) {
             const whatsapp = (l as any).whatsapp
             const cat = CATEGORIES.find(c => c.id === l.categorie)
             return (
-              <div key={l.id} data-cat={l.categorie} style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(26,24,20,.08)' }}>
+              <div key={l.id} style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(26,24,20,.08)' }}>
                 {l.photos?.[0] && <img src={l.photos[0]} alt={l.name} style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }} />}
                 <div style={{ padding: '16px' }}>
                   <div style={{ fontStyle: 'italic', fontSize: 20, fontWeight: 300, marginBottom: 2 }}>{l.name}</div>
