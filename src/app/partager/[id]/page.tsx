@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { Lieu } from '@/types'
+import { CATEGORIES } from '@/types'
 import type { Metadata } from 'next'
 
 interface Props { params: { id: string } }
@@ -15,30 +16,13 @@ async function getLieu(id: string): Promise<Lieu | null> {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const lieu = await getLieu(params.id)
   if (!lieu) return { title: 'Lieu introuvable — Atlas' }
-
   const title = lieu.name + ' — ' + lieu.city + ', ' + lieu.country
-  const description = lieu.description
-    ? lieu.description.slice(0, 160)
-    : lieu.city + ', ' + lieu.country + (lieu.address ? ' · ' + lieu.address : '')
+  const description = lieu.description ? lieu.description.slice(0, 160) : lieu.city + ', ' + lieu.country
   const image = lieu.photos?.[0] || null
-
   return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      url: 'https://atlas-lieux.vercel.app/partager/' + (lieu.slug || lieu.id),
-      siteName: 'Atlas — Répertoire de lieux',
-      type: 'article',
-      ...(image ? { images: [{ url: image, width: 1200, height: 630, alt: lieu.name }] } : {}),
-    },
-    twitter: {
-      card: image ? 'summary_large_image' : 'summary',
-      title,
-      description,
-      ...(image ? { images: [image] } : {}),
-    },
+    title, description,
+    openGraph: { title, description, url: 'https://atlas-lieux.vercel.app/partager/' + (lieu.slug || lieu.id), siteName: 'Atlas — Répertoire de lieux', type: 'article', ...(image ? { images: [{ url: image, width: 1200, height: 630, alt: lieu.name }] } : {}) },
+    twitter: { card: image ? 'summary_large_image' : 'summary', title, description, ...(image ? { images: [image] } : {}) },
   }
 }
 
@@ -47,130 +31,112 @@ function fd(d: string | null) { return d ? new Date(d).toLocaleDateString('fr-FR
 
 export default async function SharePage({ params }: Props) {
   const lieu = await getLieu(params.id)
-
   if (!lieu) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F2ED', fontFamily: 'Georgia, serif' }}>
-      <div style={{ textAlign: 'center', color: '#B0AA9E' }}>
-        <div style={{ fontSize: 40, marginBottom: 12 }}>🗺</div>
-        <div>Lieu introuvable</div>
-      </div>
+      <div style={{ textAlign: 'center', color: '#B0AA9E' }}><div style={{ fontSize: 40, marginBottom: 12 }}>🗺</div><div>Lieu introuvable</div></div>
     </div>
   )
 
-  const gpsLink = lieu.gps_lat && lieu.gps_lng
-    ? 'https://maps.google.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng : null
+  const hasGps = !!(lieu.gps_lat && lieu.gps_lng)
+  const phone = (lieu as any).phone
+  const whatsapp = (lieu as any).whatsapp
+  const website = (lieu as any).website
+  const cat = CATEGORIES.find(c => c.id === lieu.categorie)
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F2ED', fontFamily: 'Georgia, serif' }}>
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '2rem 1.25rem 4rem' }}>
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <div style={{ fontSize: 9, letterSpacing: 2, color: '#B0AA9E', textTransform: 'uppercase', marginBottom: 8 }}>Atlas — Répertoire de lieux</div>
-          <h1 style={{ fontSize: '1.8rem', fontStyle: 'italic', fontWeight: 300, lineHeight: 1.2, marginBottom: 6 }}>{lieu.name}</h1>
-          <div style={{ fontSize: 13, color: '#6B6560', marginBottom: 8 }}>{lieu.city} · {lieu.country}</div>
-          {lieu.rating > 0 && <div style={{ color: '#e0952a', fontSize: 14, letterSpacing: 1 }}>{starsStr(lieu.rating)}</div>}
+      {lieu.photos?.length > 0 && (
+        <div style={{ width: '100%', height: 280, overflow: 'hidden', position: 'relative' }}>
+          <img src={lieu.photos[0]} alt={lieu.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(26,24,20,.7))' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 20px' }}>
+            <div style={{ fontSize: 9, letterSpacing: 2, color: 'rgba(255,255,255,.7)', textTransform: 'uppercase', marginBottom: 4 }}>Atlas — Répertoire de lieux</div>
+            <div style={{ fontSize: '1.6rem', fontStyle: 'italic', fontWeight: 300, color: '#fff', lineHeight: 1.2 }}>{lieu.name}</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,.8)', marginTop: 4 }}>{lieu.city} · {lieu.country}</div>
+          </div>
         </div>
-
-        {lieu.photos?.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: lieu.photos.length === 1 ? '1fr' : 'repeat(auto-fill,minmax(180px,1fr))', gap: 6, marginBottom: '1.5rem' }}>
-            {lieu.photos.map((u: string, i: number) => (
-              <img key={i} src={u} alt={lieu.name} style={{ width: '100%', height: 220, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
-            ))}
+      )}
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '1.5rem 1.25rem 4rem' }}>
+        {!lieu.photos?.length && (
+          <div style={{ marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid rgba(26,24,20,.1)' }}>
+            <div style={{ fontSize: 9, letterSpacing: 2, color: '#B0AA9E', textTransform: 'uppercase', marginBottom: 8 }}>Atlas — Répertoire de lieux</div>
+            <div style={{ fontSize: '1.8rem', fontStyle: 'italic', fontWeight: 300, lineHeight: 1.2, marginBottom: 4 }}>{lieu.name}</div>
+            <div style={{ fontSize: 13, color: '#6B6560' }}>{lieu.city} · {lieu.country}</div>
           </div>
         )}
-
-        {lieu.description && (
-          <p style={{ fontSize: 14, lineHeight: 1.8, whiteSpace: 'pre-wrap', marginBottom: '1.25rem', color: '#1A1814' }}>{lieu.description}</p>
+        {cat && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 12px', fontSize: 12, borderRadius: 100, background: '#FDF8F2', border: '1px solid rgba(140,90,40,.2)', color: '#8C5A28', marginBottom: '1rem', fontFamily: 'system-ui, sans-serif' }}>
+            {cat.icon} {cat.label}
+          </div>
         )}
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: '1rem' }}>
-          {gpsLink && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, border: '1px solid rgba(26,24,20,.18)', borderRadius: 100, color: '#6B6560', background: '#fff' }}>
-              📍 {parseFloat(lieu.gps_lat!).toFixed(5)}°, {parseFloat(lieu.gps_lng!).toFixed(5)}°
-            </span>
+        {lieu.rating > 0 && <div style={{ color: '#e0952a', fontSize: 16, letterSpacing: 2, marginBottom: '1rem' }}>{starsStr(lieu.rating)}</div>}
+        <div style={{ background: '#fff', borderRadius: 12, padding: '14px 16px', marginBottom: '1rem', border: '1px solid rgba(26,24,20,.08)' }}>
+          {lieu.address && (
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', paddingBottom: 10, marginBottom: 10, borderBottom: '1px solid rgba(26,24,20,.06)' }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>🏠</span>
+              <span style={{ fontSize: 13, color: '#1A1814', lineHeight: 1.5 }}>{lieu.address}</span>
+            </div>
+          )}
+          {hasGps && (
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>📍</span>
+              <span style={{ fontSize: 12, color: '#6B6560', fontFamily: 'monospace' }}>{parseFloat(lieu.gps_lat!).toFixed(5)}°, {parseFloat(lieu.gps_lng!).toFixed(5)}°</span>
+            </div>
           )}
           {lieu.visit_date && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, border: '1px solid rgba(26,24,20,.18)', borderRadius: 100, color: '#6B6560', background: '#fff' }}>
-              🗓 Visité le {fd(lieu.visit_date)}
-            </span>
-          )}
-          {lieu.address && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, border: '1px solid rgba(26,24,20,.18)', borderRadius: 100, color: '#6B6560', background: '#fff' }}>
-              🏠 {lieu.address}
-            </span>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', paddingTop: 10, marginTop: 10, borderTop: '1px solid rgba(26,24,20,.06)' }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>🗓</span>
+              <span style={{ fontSize: 13, color: '#6B6560' }}>Visité le {fd(lieu.visit_date)}</span>
+            </div>
           )}
         </div>
-
-        {gpsLink && (
+        {hasGps && (
           <div style={{ marginBottom: '1.25rem' }}>
-            <div style={{ fontSize: 11, color: '#B0AA9E', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Navigation</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              <a href={'https://maps.google.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng} target="_blank" rel="noopener"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 13, border: '1px solid rgba(26,24,20,.18)', borderRadius: 10, color: '#1A1814', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>
-                🗺 Google Maps
-              </a>
-              <a href={'https://maps.apple.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng + '&ll=' + lieu.gps_lat + ',' + lieu.gps_lng} target="_blank" rel="noopener"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 13, border: '1px solid rgba(26,24,20,.18)', borderRadius: 10, color: '#1A1814', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>
-                🍎 Plans
-              </a>
-              <a href={'https://waze.com/ul?ll=' + lieu.gps_lat + ',' + lieu.gps_lng + '&navigate=yes'} target="_blank" rel="noopener"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 13, border: '1px solid rgba(26,24,20,.18)', borderRadius: 10, color: '#1A1814', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>
-                🚗 Waze
-              </a>
+            <div style={{ fontSize: 10, color: '#B0AA9E', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1.5 }}>Navigation</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {[
+                { label: '🗺 Google Maps', href: `https://maps.google.com/?q=${lieu.gps_lat},${lieu.gps_lng}` },
+                { label: '🍎 Plans', href: `https://maps.apple.com/?q=${lieu.gps_lat},${lieu.gps_lng}&ll=${lieu.gps_lat},${lieu.gps_lng}` },
+                { label: '🚗 Waze', href: `https://waze.com/ul?ll=${lieu.gps_lat},${lieu.gps_lng}&navigate=yes` },
+              ].map(({ label, href }) => (
+                <a key={label} href={href} target="_blank" rel="noopener"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, border: '1px solid rgba(26,24,20,.15)', borderRadius: 10, color: '#1A1814', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif', fontWeight: 500 }}>
+                  {label}
+                </a>
+              ))}
             </div>
           </div>
         )}
-
+        {(phone || whatsapp || website) && (
+          <div style={{ marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: 10, color: '#B0AA9E', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1.5 }}>Contact</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {phone && <a href={`tel:${phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, border: '1px solid rgba(26,24,20,.15)', borderRadius: 10, color: '#1A1814', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>📞 {phone}</a>}
+              {whatsapp && <a href={`https://wa.me/${whatsapp.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, border: '1px solid #25D366', borderRadius: 10, color: '#25D366', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>💬 WhatsApp</a>}
+              {website && <a href={website} target="_blank" rel="noopener" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, border: '1px solid rgba(26,24,20,.15)', borderRadius: 10, color: '#8C5A28', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>🌐 Site web</a>}
+            </div>
+          </div>
+        )}
+        {lieu.description && (
+          <div style={{ marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: 10, color: '#B0AA9E', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1.5 }}>À propos</div>
+            <p style={{ fontSize: 14, lineHeight: 1.8, whiteSpace: 'pre-wrap', color: '#1A1814', margin: 0 }}>{lieu.description}</p>
+          </div>
+        )}
         {lieu.tags?.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: '1.25rem' }}>
-            {lieu.tags.map((t: string) => (
-              <span key={t} style={{ display: 'inline-flex', padding: '2px 9px', fontSize: 11, border: '1px solid rgba(26,24,20,.18)', borderRadius: 100, color: '#6B6560', background: '#F5F2ED' }}>{t}</span>
-            ))}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: '1.25rem' }}>
+            {lieu.tags.map((t: string) => <span key={t} style={{ padding: '4px 12px', fontSize: 11, border: '1px solid rgba(26,24,20,.15)', borderRadius: 100, color: '#6B6560', background: '#fff' }}>{t}</span>)}
           </div>
         )}
-
-        {((lieu as any).phone || (lieu as any).whatsapp) && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: '1.25rem' }}>
-            {(lieu as any).phone && (
-              <a href={'tel:' + (lieu as any).phone}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 13, border: '1px solid rgba(26,24,20,.18)', borderRadius: 10, color: '#1A1814', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>
-                📞 {(lieu as any).phone}
-              </a>
-            )}
-            {(lieu as any).whatsapp && (
-              <a href={'https://wa.me/' + (lieu as any).whatsapp.replace(/[^0-9]/g,'')} target="_blank" rel="noopener"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 13, border: '1px solid rgba(26,24,20,.18)', borderRadius: 10, color: '#25D366', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>
-                💬 WhatsApp
-              </a>
-            )}
+        {lieu.photos?.length > 1 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 6, marginBottom: '1.25rem' }}>
+            {lieu.photos.slice(1).map((u: string, i: number) => <img key={i} src={u} alt={lieu.name} style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8, display: 'block' }} />)}
           </div>
         )}
-
-        {lieu.videos?.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: '1.25rem' }}>
-            {lieu.videos.map((u: string, i: number) => {
-              const m = u.match(/(?:v=|youtu\.be\/)([^&?]+)/)
-              return m ? (
-                <iframe key={i} width="100%" height="240"
-                  src={'https://www.youtube.com/embed/' + m[1]}
-                  frameBorder="0" allowFullScreen
-                  style={{ borderRadius: 8, border: '1px solid rgba(26,24,20,.1)' }} />
-              ) : null
-            })}
-          </div>
-        )}
-
-        <div style={{ borderTop: '1px solid rgba(26,24,20,.1)', paddingTop: '1rem', marginTop: '1.5rem' }}>
-          <a href={'https://atlas-lieux.vercel.app/partager/' + params.id}
-            style={{ display: 'block', textAlign: 'center', padding: '12px', background: '#8C5A28', color: '#fff', borderRadius: 10, textDecoration: 'none', fontSize: 14, fontFamily: 'system-ui, sans-serif', marginBottom: 12 }}>
-            Voir la fiche complète →
-          </a>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ fontSize: 11, color: '#B0AA9E' }}>Partagé depuis Atlas</div>
-            <a href="https://atlas-lieux.vercel.app" style={{ fontSize: 11, color: '#8C5A28', textDecoration: 'none' }}>atlas-lieux.vercel.app →</a>
-          </div>
+        <div style={{ borderTop: '1px solid rgba(26,24,20,.1)', paddingTop: '1rem', marginTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 11, color: '#B0AA9E', fontStyle: 'italic' }}>Partagé depuis Atlas</div>
+          <a href="https://atlas-lieux.vercel.app" style={{ fontSize: 11, color: '#8C5A28', textDecoration: 'none' }}>atlas-lieux.vercel.app →</a>
         </div>
-
       </div>
     </div>
   )
