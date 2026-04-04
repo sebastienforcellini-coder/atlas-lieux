@@ -141,3 +141,5 @@ export default async function SharePage({ params }: Props) {
     </div>
   )
 }
+
+export const dynamic = 'force-dynamic'
