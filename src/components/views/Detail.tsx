@@ -55,11 +55,11 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
   const cmts = lieu.comments ?? []
   const gpsLink = lieu.gps_lat && lieu.gps_lng ? 'https://maps.google.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng : null
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://atlas-lieux.vercel.app'
-  const shareUrl = origin + '/partager/' + (lieu.slug || lieu.id) + '?v=' + Date.now() + '?v=' + Date.now()
+  const shareUrl = origin + '/partager/' + (lieu.slug || lieu.id) + '?v=' + Date.now()
 
   const handleShare = async () => {
     if (navigator.share) {
-      try { await navigator.share({ title: lieu.name, text: buildShareText(), url: shareUrl }) } catch {}
+      try { await navigator.share({ title: lieu.name, url: shareUrl }) } catch {}
     } else {
       navigator.clipboard?.writeText(shareUrl)
       onShare('Lien copie dans le presse-papier !')
