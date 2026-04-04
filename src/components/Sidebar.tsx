@@ -51,6 +51,13 @@ export default function Sidebar({ current, onNavigate }: Props) {
         <span className="nav-icon">📍</span>Depuis ma position
       </button>
 
+      <div style={{ height: 1, background: 'var(--line)', margin: '12px 20px' }} />
+
+      <div className="nav-section">Paramètres</div>
+      <button className={`nav-item${current === 'categories' ? ' on' : ''}`} onClick={() => onNavigate('categories')}>
+        <span className="nav-icon">🏷</span>Catégories
+      </button>
+
       <div style={{ flex: 1 }} />
     </div>
   )

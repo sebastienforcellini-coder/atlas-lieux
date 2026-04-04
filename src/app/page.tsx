@@ -10,6 +10,7 @@ import LieuForm from '@/components/views/LieuForm'
 import GeoForm from '@/components/views/GeoForm'
 import Favoris from '@/components/views/Favoris'
 import Collections from '@/components/views/Collections'
+import CategoriesView from '@/components/views/Categories'
 import MapView from '@/components/views/MapView'
 import { ConfirmModal, Toast } from '@/components/UI'
 import type { Lieu, LieuInput, View, NavState } from '@/types'
@@ -19,7 +20,7 @@ const VIEW_LABELS: Record<View, string> = {
   country: 'Pays', city: 'Ville',
   detail: 'Fiche lieu', form: 'Nouveau lieu',
   map: 'Carte', geoform: 'Ma position',
-  favoris: 'Favoris', collections: 'Collections',
+  favoris: 'Favoris', collections: 'Collections', categories: 'Catégories',
 }
 
 export default function AtlasPage() {
@@ -119,6 +120,7 @@ export default function AtlasPage() {
               onUpdate={async (id, data) => { await updateLieu(id, data as LieuInput) }}
               onDelete={handleDelete} onShare={showToast} />
           )}
+          {nav.view === 'categories' && <CategoriesView onNavigate={navigate} />}
           {nav.view === 'form' && (
             <LieuForm initial={nav.editLieu ?? null} allLieux={lieux} onSave={handleSave}
               onCancel={() => nav.editLieu && 'id' in nav.editLieu

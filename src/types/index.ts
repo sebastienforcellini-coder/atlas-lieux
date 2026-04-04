@@ -50,7 +50,7 @@ export interface Comment {
 
 export type LieuInput = Omit<Lieu, 'id' | 'created_at' | 'updated_at'>
 
-export type View = 'home' | 'all' | 'country' | 'city' | 'detail' | 'form' | 'map' | 'geoform' | 'favoris' | 'collections'
+export type View = 'home' | 'all' | 'country' | 'city' | 'detail' | 'form' | 'map' | 'geoform' | 'favoris' | 'collections' | 'categories'
 
 export interface NavState {
   view: View
