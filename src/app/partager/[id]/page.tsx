@@ -129,6 +129,23 @@ export default async function SharePage({ params }: Props) {
           </div>
         )}
 
+        {((lieu as any).phone || (lieu as any).whatsapp) && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: '1.25rem' }}>
+            {(lieu as any).phone && (
+              <a href={'tel:' + (lieu as any).phone}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 13, border: '1px solid rgba(26,24,20,.18)', borderRadius: 10, color: '#1A1814', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>
+                📞 {(lieu as any).phone}
+              </a>
+            )}
+            {(lieu as any).whatsapp && (
+              <a href={'https://wa.me/' + (lieu as any).whatsapp.replace(/[^0-9]/g,'')} target="_blank" rel="noopener"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 13, border: '1px solid rgba(26,24,20,.18)', borderRadius: 10, color: '#25D366', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>
+                💬 WhatsApp
+              </a>
+            )}
+          </div>
+        )}
+
         {lieu.videos?.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: '1.25rem' }}>
             {lieu.videos.map((u: string, i: number) => {
@@ -143,9 +160,15 @@ export default async function SharePage({ params }: Props) {
           </div>
         )}
 
-        <div style={{ borderTop: '1px solid rgba(26,24,20,.1)', paddingTop: '1rem', marginTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 11, color: '#B0AA9E' }}>Partagé depuis Atlas</div>
-          <a href="https://atlas-lieux.vercel.app" style={{ fontSize: 11, color: '#8C5A28', textDecoration: 'none' }}>atlas-lieux.vercel.app →</a>
+        <div style={{ borderTop: '1px solid rgba(26,24,20,.1)', paddingTop: '1rem', marginTop: '1.5rem' }}>
+          <a href={'https://atlas-lieux.vercel.app/partager/' + params.id}
+            style={{ display: 'block', textAlign: 'center', padding: '12px', background: '#8C5A28', color: '#fff', borderRadius: 10, textDecoration: 'none', fontSize: 14, fontFamily: 'system-ui, sans-serif', marginBottom: 12 }}>
+            Voir la fiche complète →
+          </a>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: 11, color: '#B0AA9E' }}>Partagé depuis Atlas</div>
+            <a href="https://atlas-lieux.vercel.app" style={{ fontSize: 11, color: '#8C5A28', textDecoration: 'none' }}>atlas-lieux.vercel.app →</a>
+          </div>
         </div>
 
       </div>

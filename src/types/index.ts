@@ -33,6 +33,7 @@ export const CATEGORIES: { id: string; label: string; icon: string }[] = [
   { id: 'sport',      label: 'Sport',          icon: '⚽' },
   { id: 'monument',   label: 'Monument',       icon: '🏛' },
   { id: 'spa',        label: 'Spa / Bien-être', icon: '💆' },
+  { id: 'souk',       label: 'Souk',           icon: '🏺' },
   { id: 'nightlife',  label: 'Nightlife',      icon: '🎶' },
   { id: 'autre',      label: 'Autre',          icon: '📍' },
 ]

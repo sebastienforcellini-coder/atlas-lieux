@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import type { Lieu, View } from '@/types'
 import { useCollections, type Collection } from '@/lib/useCollections'
+import { CATEGORIES } from '@/types'
 import { LieuCard } from './Home'
 
 interface Props {
@@ -62,6 +63,7 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
   const [editing, setEditing] = useState<Collection | null>(null)
   const [open, setOpen] = useState<number | null>(null)
   const [copied, setCopied] = useState<number | null>(null)
+  const [filterCat, setFilterCat] = useState<string | null>(null)
 
   const handleCreate = async (title: string, desc: string, ids: number[]) => {
     await addCollection(title, desc, ids)
@@ -98,6 +100,22 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
       {showForm && <CollectionForm lieux={lieux} onSave={handleCreate} onCancel={() => setShowForm(false)} />}
       {editing && <CollectionForm lieux={lieux} initial={editing} onSave={handleUpdate} onCancel={() => setEditing(null)} />}
 
+      {/* Filtre par catégorie */}
+      {lieux.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+          <button onClick={() => setFilterCat(null)}
+            style={{ padding: '4px 12px', borderRadius: 100, border: '1px solid', fontSize: 12, cursor: 'pointer', borderColor: !filterCat ? 'var(--accent)' : 'var(--line2)', background: !filterCat ? 'var(--accent-bg)' : 'var(--bg)', color: !filterCat ? 'var(--accent)' : 'var(--mid)' }}>
+            Tous
+          </button>
+          {CATEGORIES.map(c => (
+            <button key={c.id} onClick={() => setFilterCat(filterCat === c.id ? null : c.id)}
+              style={{ padding: '4px 12px', borderRadius: 100, border: '1px solid', fontSize: 12, cursor: 'pointer', borderColor: filterCat === c.id ? 'var(--accent)' : 'var(--line2)', background: filterCat === c.id ? 'var(--accent-bg)' : 'var(--bg)', color: filterCat === c.id ? 'var(--accent)' : 'var(--mid)' }}>
+              {c.icon} {c.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {collections.length === 0 && !showForm ? (
         <div className="empty-state">
           <div className="empty-icon">📚</div>
@@ -108,7 +126,7 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {collections.map(col => {
-            const colLieux = lieux.filter(l => col.lieux_ids.includes(l.id))
+            const colLieux = lieux.filter(l => col.lieux_ids.includes(l.id) && (!filterCat || l.categorie === filterCat))
             const isOpen = open === col.id
             return (
               <div key={col.id} style={{ border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
