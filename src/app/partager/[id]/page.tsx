@@ -44,6 +44,7 @@ export default async function SharePage({ params, searchParams }: Props) {
   const phone = (lieu as any).phone
   const whatsapp = (lieu as any).whatsapp
   const website = (lieu as any).website
+  const email = (lieu as any).email
   const cat = CATEGORIES.find(c => c.id === lieu.categorie)
   const fromCollection = searchParams.from
 
@@ -111,12 +112,13 @@ export default async function SharePage({ params, searchParams }: Props) {
             </div>
           </div>
         )}
-        {(phone || whatsapp || website) && (
+        {(phone || whatsapp || website || email) && (
           <div style={{ marginBottom: '1.25rem' }}>
             <div style={{ fontSize: 10, color: '#B0AA9E', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1.5 }}>Contact</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {phone && <a href={`tel:${phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, border: '1px solid rgba(26,24,20,.15)', borderRadius: 10, color: '#1A1814', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>📞 {phone}</a>}
               {whatsapp && <a href={`https://wa.me/${whatsapp.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, border: '1px solid #25D366', borderRadius: 10, color: '#25D366', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>💬 WhatsApp</a>}
+              {email && <a href={`mailto:${email}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, border: '1px solid rgba(26,24,20,.15)', borderRadius: 10, color: '#1A1814', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>✉️ {email}</a>}
               {website && <a href={website} target="_blank" rel="noopener" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, border: '1px solid rgba(26,24,20,.15)', borderRadius: 10, color: '#8C5A28', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>🌐 Site web</a>}
             </div>
           </div>
