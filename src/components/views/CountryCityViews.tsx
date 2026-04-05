@@ -1,5 +1,7 @@
 'use client'
+import { useState } from 'react'
 import type { Lieu, View } from '@/types'
+import { CATEGORIES } from '@/types'
 import { uniq, plural } from '@/components/UI'
 import { LieuCard } from './Home'
 
@@ -55,6 +57,11 @@ interface CityProps {
 
 export function CityView({ country, city, lieux, onNavigate, onDelete }: CityProps) {
   const filtered = lieux.filter(l => l.country === country && l.city === city)
+  const [activeCat, setActiveCat] = useState<string | null>(null)
+
+  // Catégories présentes dans cette ville uniquement
+  const catsPresentes = CATEGORIES.filter(c => filtered.some(l => l.categorie === c.id))
+  const displayed = activeCat ? filtered.filter(l => l.categorie === activeCat) : filtered
 
   return (
     <div>
@@ -75,10 +82,29 @@ export function CityView({ country, city, lieux, onNavigate, onDelete }: CityPro
           ＋ Nouvelle fiche
         </button>
       </div>
-      {filtered.length === 0
-        ? <div className="empty-state"><div>Aucun lieu dans cette ville.</div></div>
+
+      {/* Filtres par catégorie */}
+      {catsPresentes.length > 1 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+          <button
+            onClick={() => setActiveCat(null)}
+            style={{ padding: '5px 12px', borderRadius: 100, border: '1px solid', fontSize: 12, cursor: 'pointer', borderColor: !activeCat ? 'var(--accent)' : 'var(--line2)', background: !activeCat ? 'var(--accent-bg)' : 'var(--bg)', color: !activeCat ? 'var(--accent)' : 'var(--mid)' }}>
+            Tous
+          </button>
+          {catsPresentes.map(c => (
+            <button key={c.id}
+              onClick={() => setActiveCat(activeCat === c.id ? null : c.id)}
+              style={{ padding: '5px 12px', borderRadius: 100, border: '1px solid', fontSize: 12, cursor: 'pointer', borderColor: activeCat === c.id ? 'var(--accent)' : 'var(--line2)', background: activeCat === c.id ? 'var(--accent-bg)' : 'var(--bg)', color: activeCat === c.id ? 'var(--accent)' : 'var(--mid)' }}>
+              {c.icon} {c.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {displayed.length === 0
+        ? <div className="empty-state"><div>Aucun lieu dans cette catégorie.</div></div>
         : <div className="grid-cards">
-            {filtered.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} onDelete={onDelete} />)}
+            {displayed.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} onDelete={onDelete} />)}
           </div>
       }
     </div>

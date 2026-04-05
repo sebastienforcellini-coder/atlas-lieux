@@ -3,7 +3,10 @@ import type { Lieu } from '@/types'
 import { CATEGORIES } from '@/types'
 import type { Metadata } from 'next'
 
-interface Props { params: { id: string } }
+interface Props {
+  params: { id: string }
+  searchParams: { from?: string }
+}
 
 async function getLieu(id: string): Promise<Lieu | null> {
   const isNumeric = /^\d+$/.test(id)
@@ -29,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 function starsStr(n: number) { return '★'.repeat(n) + '☆'.repeat(5 - n) }
 function fd(d: string | null) { return d ? new Date(d).toLocaleDateString('fr-FR') : '' }
 
-export default async function SharePage({ params }: Props) {
+export default async function SharePage({ params, searchParams }: Props) {
   const lieu = await getLieu(params.id)
   if (!lieu) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F2ED', fontFamily: 'Georgia, serif' }}>
@@ -42,6 +45,7 @@ export default async function SharePage({ params }: Props) {
   const whatsapp = (lieu as any).whatsapp
   const website = (lieu as any).website
   const cat = CATEGORIES.find(c => c.id === lieu.categorie)
+  const fromCollection = searchParams.from
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F2ED', fontFamily: 'Georgia, serif' }}>
@@ -133,9 +137,20 @@ export default async function SharePage({ params }: Props) {
             {lieu.photos.slice(1).map((u: string, i: number) => <img key={i} src={u} alt={lieu.name} style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8, display: 'block' }} />)}
           </div>
         )}
-        <div style={{ borderTop: '1px solid rgba(26,24,20,.1)', paddingTop: '1rem', marginTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+
+        {/* Bouton retour à la collection si on vient de là */}
+        {fromCollection && (
+          <div style={{ marginTop: '1.5rem' }}>
+            <a href={`https://atlas-lieux.vercel.app/collection/${fromCollection}`}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', fontSize: 13, border: '1px solid rgba(140,90,40,.3)', borderRadius: 10, color: '#8C5A28', textDecoration: 'none', background: '#FDF8F2', fontFamily: 'system-ui, sans-serif' }}>
+              ← Retour à la collection
+            </a>
+          </div>
+        )}
+
+        {/* Footer — sans lien vers l'appli */}
+        <div style={{ borderTop: '1px solid rgba(26,24,20,.1)', paddingTop: '1rem', marginTop: '1.5rem' }}>
           <div style={{ fontSize: 11, color: '#B0AA9E', fontStyle: 'italic' }}>Partagé depuis Atlas</div>
-          <a href="https://atlas-lieux.vercel.app" style={{ fontSize: 11, color: '#8C5A28', textDecoration: 'none' }}>atlas-lieux.vercel.app →</a>
         </div>
       </div>
     </div>

@@ -59,7 +59,7 @@ export default async function CollectionPage({ params, searchParams }: Props) {
           <div style={{ fontSize: 11, color: '#B0AA9E' }}>{allLieux.length} lieu{allLieux.length !== 1 ? 'x' : ''}</div>
         </div>
 
-        {/* Filtres par catégorie — liens URL côté serveur */}
+        {/* Filtres par catégorie */}
         {catsPresentes.length > 1 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
             <a href={collectionUrl} style={btnStyle(activeCat === 'all')}>Tous</a>
@@ -123,9 +123,10 @@ export default async function CollectionPage({ params, searchParams }: Props) {
                       {whatsapp && <a href={`https://wa.me/${whatsapp.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener" style={{ padding: '6px 12px', fontSize: 12, border: '1px solid #25D366', borderRadius: 8, color: '#25D366', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>💬 WhatsApp</a>}
                     </div>
                   )}
-                  <a href={collectionUrl}
+                  {/* Voir la fiche complète → avec paramètre from pour pouvoir revenir */}
+                  <a href={`https://atlas-lieux.vercel.app/partager/${l.id}?from=${params.slug}`}
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 12, border: '1px solid rgba(140,90,40,.3)', borderRadius: 8, color: '#8C5A28', textDecoration: 'none', background: '#FDF8F2', fontFamily: 'system-ui, sans-serif', marginTop: 4 }}>
-                    ← Retour à la collection
+                    Voir la fiche complète →
                   </a>
                 </div>
               </div>
@@ -133,9 +134,9 @@ export default async function CollectionPage({ params, searchParams }: Props) {
           })}
         </div>
 
-        <div style={{ borderTop: '1px solid rgba(26,24,20,.1)', paddingTop: '1rem', marginTop: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* Footer — sans lien vers l'appli */}
+        <div style={{ borderTop: '1px solid rgba(26,24,20,.1)', paddingTop: '1rem', marginTop: '2rem' }}>
           <div style={{ fontSize: 11, color: '#B0AA9E', fontStyle: 'italic' }}>Partagé depuis Atlas</div>
-          <a href="https://atlas-lieux.vercel.app" style={{ fontSize: 11, color: '#8C5A28', textDecoration: 'none' }}>atlas-lieux.vercel.app →</a>
         </div>
       </div>
     </div>
