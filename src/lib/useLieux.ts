@@ -126,6 +126,17 @@ export function useLieux() {
     if (input.address === '') normalized.address = null
     if (input.gps_lat === '') normalized.gps_lat = null
     if (input.gps_lng === '') normalized.gps_lng = null
+    if ((input as any).email === '') (normalized as any).email = null
+    if ((input as any).website === '') (normalized as any).website = null
+    if ((input as any).instagram === '') (normalized as any).instagram = null
+    if ((input as any).facebook === '') (normalized as any).facebook = null
+    // Toujours inclure ces champs dans l'update
+    ;(normalized as any).email = (input as any).email || null
+    ;(normalized as any).website = (input as any).website || null
+    ;(normalized as any).instagram = (input as any).instagram || null
+    ;(normalized as any).facebook = (input as any).facebook || null
+    ;(normalized as any).phone = (input as any).phone || null
+    ;(normalized as any).whatsapp = (input as any).whatsapp || null
 
     const { error } = await supabase
       .from(TABLE)
