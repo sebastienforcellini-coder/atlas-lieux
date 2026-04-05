@@ -58,10 +58,11 @@ interface CityProps {
 export function CityView({ country, city, lieux, onNavigate, onDelete }: CityProps) {
   const filtered = lieux.filter(l => l.country === country && l.city === city)
   const [activeCat, setActiveCat] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
 
   // Catégories présentes dans cette ville uniquement
   const catsPresentes = CATEGORIES.filter(c => filtered.some(l => l.categorie === c.id))
-  const displayed = activeCat ? filtered.filter(l => l.categorie === activeCat) : filtered
+  const displayed = filtered.filter(l => (!activeCat || l.categorie === activeCat) && (!search || l.name.toLowerCase().includes(search.toLowerCase()) || l.tags?.some(t => t.toLowerCase().includes(search.toLowerCase()))))
 
   return (
     <div>
@@ -81,6 +82,12 @@ export function CityView({ country, city, lieux, onNavigate, onDelete }: CityPro
         >
           ＋ Nouvelle fiche
         </button>
+      </div>
+
+      {/* Barre de recherche */}
+      <div style={{ marginBottom: 12 }}>
+        <input className="field-input" value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="🔍 Rechercher un lieu, un tag..." />
       </div>
 
       {/* Filtres par catégorie */}
