@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import type { Lieu, View } from '@/types'
 import { useCollections, type Collection } from '@/lib/useCollections'
 import { CATEGORIES } from '@/types'
@@ -21,6 +21,29 @@ function CollectionForm({ lieux, initial, onSave, onCancel }: {
   const [desc, setDesc] = useState(initial?.description || '')
   const [selected, setSelected] = useState<number[]>(initial?.lieux_ids || [])
   const [formSearch, setFormSearch] = useState('')
+  const [showEmojiTitle, setShowEmojiTitle] = useState(false)
+  const [showEmojiDesc, setShowEmojiDesc] = useState(false)
+  const titleRef = useRef<HTMLInputElement>(null)
+  const descRef = useRef<HTMLInputElement>(null)
+
+
+  const EmojiPalette = ({ onPick }: { onPick: (e: string) => void }) => (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: 8, background: 'var(--bg)', border: '1px solid var(--line2)', borderRadius: 8, marginBottom: 6, maxHeight: 120, overflowY: 'auto' }}>
+      {['⭐', '🌟', '💫', '✨', '🔥', '❤️', '💛', '💚', '💙', '💜', '🎉', '👍', '👌', '🙌', '💪', '🍽', '☕', '🍷', '🍸', '🥂', '🌿', '🌺', '🌸', '🏖', '🏔', '🗺', '📍', '🚗', '🚶', '🏃', '💆', '🛍', '🎨', '🎭', '🎪', '🏛', '⛩', '🕌', '🕍', '💒', '🏠', '🏡', '🌙', '☀️', '🌈', '❄️', '🌊', '🌴', '🌵', '🦁', '🐠', '🦋', '🎵', '🎶', '📸', '💰', '💎', '🔑', '📞', '💬', '📧', '🌐', '⏰', '📅', '🗓', '✅', '❌', '⚠️', '💡', '🔍', '📝', '🎁', '🏆', '🥇'].map((e: string) => (
+        <button key={e} type="button" onClick={() => onPick(e)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, padding: 2, borderRadius: 4 }}>
+          {e}
+        </button>
+      ))}
+    </div>
+  )
+
+  const insertEmoji = (val: string, setter: (v: string) => void, ref: React.RefObject<HTMLInputElement>, emoji: string) => {
+    const el = ref.current
+    const pos = el ? (el.selectionStart ?? val.length) : val.length
+    setter(val.slice(0, pos) + emoji + val.slice(pos))
+    setTimeout(() => { if (el) { el.focus(); el.setSelectionRange(pos + emoji.length, pos + emoji.length) } }, 0)
+  }
 
   const toggle = (id: number) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
 
@@ -37,12 +60,20 @@ function CollectionForm({ lieux, initial, onSave, onCancel }: {
 
   return (
     <div style={{ background: 'var(--bg2)', borderRadius: 12, padding: 16, marginBottom: 16, border: '1px solid var(--line)' }}>
-      <div className="label" style={{ marginBottom: 4 }}>Nom de la collection *</div>
-      <input className="field-input" value={title} onChange={e => setTitle(e.target.value)}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+        <div className="label" style={{ marginBottom: 0 }}>Nom de la collection *</div>
+        <button type="button" onClick={() => setShowEmojiTitle(s => !s)} style={{ background: 'none', border: '1px solid var(--line2)', borderRadius: 8, padding: '2px 7px', cursor: 'pointer', fontSize: 15 }}>😊</button>
+      </div>
+      {showEmojiTitle && <EmojiPalette onPick={e => insertEmoji(title, setTitle, titleRef, e)} />}
+      <input ref={titleRef} className="field-input" value={title} onChange={e => setTitle(e.target.value)}
         placeholder="Nos adresses Marrakech, Restaurants Paris..." style={{ marginBottom: 10 }} />
 
-      <div className="label" style={{ marginBottom: 4 }}>Description</div>
-      <input className="field-input" value={desc} onChange={e => setDesc(e.target.value)}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+        <div className="label" style={{ marginBottom: 0 }}>Description</div>
+        <button type="button" onClick={() => setShowEmojiDesc(s => !s)} style={{ background: 'none', border: '1px solid var(--line2)', borderRadius: 8, padding: '2px 7px', cursor: 'pointer', fontSize: 15 }}>😊</button>
+      </div>
+      {showEmojiDesc && <EmojiPalette onPick={e => insertEmoji(desc, setDesc, descRef, e)} />}
+      <input ref={descRef} className="field-input" value={desc} onChange={e => setDesc(e.target.value)}
         placeholder="Description courte..." style={{ marginBottom: 12 }} />
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
