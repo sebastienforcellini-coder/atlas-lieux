@@ -8,7 +8,7 @@ export interface Category {
   position: number
 }
 
-const TABLE = 'catégories'
+const TABLE = 'categories'
 
 const normalizeId = (s: string) => s
   .toLowerCase()
