@@ -55,11 +55,21 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
   const cmts = lieu.comments ?? []
   const gpsLink = lieu.gps_lat && lieu.gps_lng ? 'https://maps.google.com/?q=' + lieu.gps_lat + ',' + lieu.gps_lng : null
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://atlas-lieux.vercel.app'
-  const shareUrl = origin + '/partager/' + (lieu.slug || lieu.id) + '?v=' + Date.now()
+  const shareUrl = origin + '/partager/' + (lieu.slug || lieu.id)
+
+  const buildShareText = () => {
+    const parts: string[] = []
+    parts.push(lieu.name)
+    parts.push(lieu.city + ', ' + lieu.country)
+    if (lieu.address) parts.push(lieu.address)
+    if (lieu.description) parts.push(lieu.description.slice(0, 200))
+    if (lieu.tags?.length) parts.push(lieu.tags.join(' · '))
+    return parts.filter(Boolean).join('\n')
+  }
 
   const handleShare = async () => {
     if (navigator.share) {
-      try { await navigator.share({ title: lieu.name, url: shareUrl }) } catch {}
+      try { await navigator.share({ title: lieu.name, text: buildShareText(), url: shareUrl }) } catch {}
     } else {
       navigator.clipboard?.writeText(shareUrl)
       onShare('Lien copie dans le presse-papier !')
@@ -176,6 +186,16 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
             {(lieu as any).whatsapp && (
               <a href={`https://wa.me/${(lieu as any).whatsapp.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener" className="pill" style={{ textDecoration: 'none', color: '#25D366' }}>
                 💬 WhatsApp
+              </a>
+            )}
+            {(lieu as any).email && (
+              <a href={`mailto:${(lieu as any).email}`} className="pill" style={{ textDecoration: 'none', color: 'var(--text)' }}>
+                ✉️ {(lieu as any).email}
+              </a>
+            )}
+            {(lieu as any).website && (
+              <a href={(lieu as any).website} target="_blank" rel="noopener" className="pill" style={{ textDecoration: 'none', color: 'var(--accent)' }}>
+                🌐 {(lieu as any).website}
               </a>
             )}
           </div>

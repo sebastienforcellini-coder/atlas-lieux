@@ -10,7 +10,7 @@ import { reverseGeocode } from '@/lib/geocode'
 const EMPTY: LieuInput = {
   name: '', country: '', city: '', address: '', description: '',
   photos: [], videos: [], tags: [], gps_lat: '', gps_lng: '',
-  rating: 0, visit_date: '', comments: [], slug: null, categorie: 'autre', favori: false, phone: '', whatsapp: '',
+  rating: 0, visit_date: '', comments: [], slug: null, categorie: 'autre', favori: false, phone: '', whatsapp: '', email: '', website: '',
 }
 
 interface Props {
@@ -396,6 +396,14 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
         <div>
           <div className="label">WhatsApp</div>
           <input className="field-input" value={form.whatsapp ?? ''} onChange={e => up('whatsapp', e.target.value)} placeholder="+33 6 12 34 56 78" />
+        </div>
+        <div>
+          <div className="label">Email</div>
+          <input className="field-input" type="email" value={(form as any).email ?? ''} onChange={e => up('email' as any, e.target.value)} placeholder="contact@restaurant.com" />
+        </div>
+        <div>
+          <div className="label">Site web</div>
+          <input className="field-input" value={(form as any).website ?? ''} onChange={e => up('website' as any, e.target.value)} placeholder="https://restaurant.com" />
         </div>
         <div style={{ gridColumn: '1/-1' }}>
           <div className="label">Description / Notes</div>

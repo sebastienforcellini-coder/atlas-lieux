@@ -74,6 +74,26 @@ export default async function CollectionPage({ params, searchParams }: Props) {
           </div>
         )}
 
+        {/* Barre de recherche */}
+        <div style={{ marginBottom: 16 }}>
+          <input id="search-col" type="text" placeholder="🔍 Rechercher un lieu..."
+            style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(26,24,20,.15)', fontSize: 14, fontFamily: 'system-ui, sans-serif', background: '#fff', boxSizing: 'border-box' as const }}
+            onInput={undefined} />
+          <script dangerouslySetInnerHTML={{ __html: `
+            document.addEventListener('DOMContentLoaded', function() {
+              var inp = document.getElementById('search-col');
+              inp.addEventListener('input', function() {
+                var q = inp.value.toLowerCase();
+                document.querySelectorAll('[data-name]').forEach(function(card) {
+                  var name = card.getAttribute('data-name').toLowerCase();
+                  var city = card.getAttribute('data-city').toLowerCase();
+                  card.style.display = (!q || name.includes(q) || city.includes(q)) ? 'block' : 'none';
+                });
+              });
+            });
+          `}} />
+        </div>
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {lieux.map((l: Lieu) => {
             const hasGps = !!(l.gps_lat && l.gps_lng)
@@ -81,7 +101,7 @@ export default async function CollectionPage({ params, searchParams }: Props) {
             const whatsapp = (l as any).whatsapp
             const cat = CATEGORIES.find(c => c.id === l.categorie)
             return (
-              <div key={l.id} style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(26,24,20,.08)' }}>
+              <div key={l.id} data-name={l.name} data-city={l.city} style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(26,24,20,.08)' }}>
                 {l.photos?.[0] && <img src={l.photos[0]} alt={l.name} style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }} />}
                 <div style={{ padding: '16px' }}>
                   <div style={{ fontStyle: 'italic', fontSize: 20, fontWeight: 300, marginBottom: 2 }}>{l.name}</div>
@@ -120,10 +140,12 @@ export default async function CollectionPage({ params, searchParams }: Props) {
                       </div>
                     </div>
                   )}
-                  {(phone || whatsapp) && (
+                  {(phone || whatsapp || (l as any).email || (l as any).website) && (
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
                       {phone && <a href={`tel:${phone}`} style={{ padding: '6px 12px', fontSize: 12, border: '1px solid rgba(26,24,20,.15)', borderRadius: 8, color: '#1A1814', textDecoration: 'none', background: '#F5F2ED', fontFamily: 'system-ui, sans-serif' }}>📞 {phone}</a>}
                       {whatsapp && <a href={`https://wa.me/${whatsapp.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener" style={{ padding: '6px 12px', fontSize: 12, border: '1px solid #25D366', borderRadius: 8, color: '#25D366', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>💬 WhatsApp</a>}
+                      {(l as any).email && <a href={`mailto:${(l as any).email}`} style={{ padding: '6px 12px', fontSize: 12, border: '1px solid rgba(26,24,20,.15)', borderRadius: 8, color: '#1A1814', textDecoration: 'none', background: '#F5F2ED', fontFamily: 'system-ui, sans-serif' }}>✉️ {(l as any).email}</a>}
+                      {(l as any).website && <a href={(l as any).website} target="_blank" rel="noopener" style={{ padding: '6px 12px', fontSize: 12, border: '1px solid rgba(26,24,20,.15)', borderRadius: 8, color: '#8C5A28', textDecoration: 'none', background: '#FDF8F2', fontFamily: 'system-ui, sans-serif' }}>🌐 Site web</a>}
                     </div>
                   )}
                   <a href={`https://atlas-lieux.vercel.app/partager/${l.id}?from=${params.slug}`}

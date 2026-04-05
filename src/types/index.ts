@@ -20,6 +20,8 @@ export interface Lieu {
   favori: boolean
   phone: string | null
   whatsapp: string | null
+  email: string | null
+  website: string | null
 }
 
 export const CATEGORIES: { id: string; label: string; icon: string }[] = [

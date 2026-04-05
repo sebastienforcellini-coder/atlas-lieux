@@ -64,6 +64,7 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
   const [open, setOpen] = useState<number | null>(null)
   const [copied, setCopied] = useState<number | null>(null)
   const [filterCat, setFilterCat] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
 
   const handleCreate = async (title: string, desc: string, ids: number[]) => {
     await addCollection(title, desc, ids)
@@ -97,6 +98,12 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
         <button className="btn btn-accent btn-sm" onClick={() => setShowForm(s => !s)}>+ Nouvelle</button>
       </div>
 
+      {/* Barre de recherche */}
+      <div style={{ marginBottom: 12 }}>
+        <input className="field-input" value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="🔍 Rechercher un lieu dans les collections..." />
+      </div>
+
       {showForm && <CollectionForm lieux={lieux} onSave={handleCreate} onCancel={() => setShowForm(false)} />}
       {editing && <CollectionForm lieux={lieux} initial={editing} onSave={handleUpdate} onCancel={() => setEditing(null)} />}
 
@@ -126,7 +133,7 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {collections.map(col => {
-            const colLieux = lieux.filter(l => col.lieux_ids.includes(l.id) && (!filterCat || l.categorie === filterCat))
+            const colLieux = lieux.filter(l => col.lieux_ids.includes(l.id) && (!filterCat || l.categorie === filterCat) && (!search || l.name.toLowerCase().includes(search.toLowerCase()) || l.city.toLowerCase().includes(search.toLowerCase())))
             const isOpen = open === col.id
             return (
               <div key={col.id} style={{ border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
