@@ -22,6 +22,8 @@ export interface Lieu {
   whatsapp: string | null
   email: string | null
   website: string | null
+  instagram: string | null
+  facebook: string | null
 }
 
 export const CATEGORIES: { id: string; label: string; icon: string }[] = [

@@ -407,6 +407,14 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
           <div className="label">Site web</div>
           <input className="field-input" value={(form as any).website ?? ''} onChange={e => up('website' as any, e.target.value)} placeholder="https://restaurant.com" />
         </div>
+        <div>
+          <div className="label">Instagram</div>
+          <input className="field-input" value={(form as any).instagram ?? ''} onChange={e => up('instagram' as any, e.target.value)} placeholder="https://instagram.com/restaurant" />
+        </div>
+        <div>
+          <div className="label">Facebook</div>
+          <input className="field-input" value={(form as any).facebook ?? ''} onChange={e => up('facebook' as any, e.target.value)} placeholder="https://facebook.com/restaurant" />
+        </div>
         <div style={{ gridColumn: '1/-1' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
             <div className="label" style={{ marginBottom: 0 }}>Description / Notes</div>
