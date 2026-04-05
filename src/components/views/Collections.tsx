@@ -20,8 +20,20 @@ function CollectionForm({ lieux, initial, onSave, onCancel }: {
   const [title, setTitle] = useState(initial?.title || '')
   const [desc, setDesc] = useState(initial?.description || '')
   const [selected, setSelected] = useState<number[]>(initial?.lieux_ids || [])
+  const [formSearch, setFormSearch] = useState('')
 
   const toggle = (id: number) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
+
+  // Lieux déjà sélectionnés en haut, puis les autres, filtrés par recherche
+  const filtered = lieux.filter(l =>
+    !formSearch ||
+    l.name.toLowerCase().includes(formSearch.toLowerCase()) ||
+    l.city.toLowerCase().includes(formSearch.toLowerCase())
+  )
+  const sortedLieux = [
+    ...filtered.filter(l => selected.includes(l.id)),
+    ...filtered.filter(l => !selected.includes(l.id)),
+  ]
 
   return (
     <div style={{ background: 'var(--bg2)', borderRadius: 12, padding: 16, marginBottom: 16, border: '1px solid var(--line)' }}>
@@ -43,11 +55,19 @@ function CollectionForm({ lieux, initial, onSave, onCancel }: {
           {selected.length === lieux.length ? '☐ Tout désélectionner' : '☑ Tout sélectionner'}
         </button>
       </div>
+
+      {/* Recherche dans le formulaire */}
+      <input className="field-input" value={formSearch} onChange={e => setFormSearch(e.target.value)}
+        placeholder="🔍 Rechercher un lieu..." style={{ marginBottom: 8 }} />
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 6, maxHeight: 280, overflowY: 'auto', marginBottom: 14 }}>
-        {lieux.map(l => (
+        {sortedLieux.map(l => (
           <div key={l.id} onClick={() => toggle(l.id)}
-            style={{ padding: '8px 10px', borderRadius: 8, cursor: 'pointer', border: '2px solid', borderColor: selected.includes(l.id) ? 'var(--accent)' : 'var(--line)', background: selected.includes(l.id) ? 'var(--accent-bg)' : 'var(--bg)', transition: 'all .15s' }}>
+            style={{ padding: '8px 10px', borderRadius: 8, cursor: 'pointer', border: '2px solid', borderColor: selected.includes(l.id) ? 'var(--accent)' : 'var(--line)', background: selected.includes(l.id) ? 'var(--accent-bg)' : 'var(--bg)', transition: 'all .15s', position: 'relative' }}>
             {l.photos?.[0] && <img src={l.photos[0]} style={{ width: '100%', height: 60, objectFit: 'cover', borderRadius: 5, display: 'block', marginBottom: 5 }} alt="" />}
+            {selected.includes(l.id) && (
+              <div style={{ position: 'absolute', top: 6, right: 6, background: 'var(--accent)', borderRadius: 100, width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff' }}>✓</div>
+            )}
             <div style={{ fontSize: 12, fontWeight: 500, color: selected.includes(l.id) ? 'var(--accent)' : 'var(--text)', lineHeight: 1.2 }}>{l.name}</div>
             <div style={{ fontSize: 10, color: 'var(--soft)' }}>{l.city}</div>
           </div>
@@ -140,8 +160,18 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {collections.map(col => {
-            const colLieux = lieux.filter(l => col.lieux_ids.includes(l.id) && (!filterCat || l.categorie === filterCat) && (!search || l.name.toLowerCase().includes(search.toLowerCase()) || l.city.toLowerCase().includes(search.toLowerCase())))
+            const colLieux = lieux.filter(l =>
+              col.lieux_ids.includes(l.id) &&
+              (!filterCat || l.categorie === filterCat) &&
+              (!search || l.name.toLowerCase().includes(search.toLowerCase()) || l.city.toLowerCase().includes(search.toLowerCase()))
+            )
             const isOpen = open === col.id
+
+            // Grouper par catégorie
+            const catGroups = CATEGORIES
+              .map(c => ({ cat: c, items: colLieux.filter(l => l.categorie === c.id) }))
+              .filter(g => g.items.length > 0)
+
             return (
               <div key={col.id} style={{ border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
                 <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: 'var(--bg2)' }} onClick={() => setOpen(isOpen ? null : col.id)}>
@@ -162,10 +192,27 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
                 {isOpen && (
                   <div style={{ padding: '12px 16px' }}>
                     {colLieux.length === 0
-                      ? <div style={{ fontSize: 13, color: 'var(--soft)' }}>Les lieux de cette collection ont été supprimés.</div>
-                      : <div className="grid-cards">
-                          {colLieux.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} onDelete={onDelete} />)}
-                        </div>
+                      ? <div style={{ fontSize: 13, color: 'var(--soft)' }}>Aucun lieu trouvé.</div>
+                      : filterCat
+                        // Si filtre actif → affichage plat
+                        ? <div className="grid-cards">
+                            {colLieux.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} onDelete={onDelete} />)}
+                          </div>
+                        // Par défaut → groupé par catégorie
+                        : <div>
+                            {catGroups.map(({ cat, items }) => (
+                              <div key={cat.id} style={{ marginBottom: 20 }}>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--mid)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span>{cat.icon}</span>
+                                  <span style={{ textTransform: 'uppercase', letterSpacing: 1 }}>{cat.label}</span>
+                                  <span style={{ color: 'var(--soft)', fontWeight: 400 }}>({items.length})</span>
+                                </div>
+                                <div className="grid-cards">
+                                  {items.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} onDelete={onDelete} />)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                     }
                   </div>
                 )}
