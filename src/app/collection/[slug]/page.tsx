@@ -76,12 +76,14 @@ function LieuCard({ l, params }: { l: Lieu, params: { slug: string } }) {
             </div>
           </div>
         )}
-        {(phone || whatsapp || (l as any).email || (l as any).website) && (
+        {(phone || whatsapp || (l as any).email || (l as any).website || (l as any).instagram || (l as any).facebook) && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
             {phone && <a href={`tel:${phone}`} style={{ padding: '6px 12px', fontSize: 12, border: '1px solid rgba(26,24,20,.15)', borderRadius: 8, color: '#1A1814', textDecoration: 'none', background: '#F5F2ED', fontFamily: 'system-ui, sans-serif' }}>📞 {phone}</a>}
             {whatsapp && <a href={`https://wa.me/${whatsapp.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener" style={{ padding: '6px 12px', fontSize: 12, border: '1px solid #25D366', borderRadius: 8, color: '#25D366', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>💬 WhatsApp</a>}
             {(l as any).email && <a href={`mailto:${(l as any).email}`} style={{ padding: '6px 12px', fontSize: 12, border: '1px solid rgba(26,24,20,.15)', borderRadius: 8, color: '#1A1814', textDecoration: 'none', background: '#F5F2ED', fontFamily: 'system-ui, sans-serif' }}>✉️ {(l as any).email}</a>}
             {(l as any).website && <a href={(l as any).website} target="_blank" rel="noopener" style={{ padding: '6px 12px', fontSize: 12, border: '1px solid rgba(26,24,20,.15)', borderRadius: 8, color: '#8C5A28', textDecoration: 'none', background: '#FDF8F2', fontFamily: 'system-ui, sans-serif' }}>🌐 Site web</a>}
+            {(l as any).instagram && <a href={(l as any).instagram} target="_blank" rel="noopener" style={{ padding: '6px 12px', fontSize: 12, border: '1px solid #E1306C', borderRadius: 8, color: '#E1306C', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>📸 Instagram</a>}
+            {(l as any).facebook && <a href={(l as any).facebook} target="_blank" rel="noopener" style={{ padding: '6px 12px', fontSize: 12, border: '1px solid #1877F2', borderRadius: 8, color: '#1877F2', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>👥 Facebook</a>}
           </div>
         )}
         <a href={`https://atlas-lieux.vercel.app/partager/${l.id}?from=${params.slug}`}
