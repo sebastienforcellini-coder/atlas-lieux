@@ -64,6 +64,8 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
   const [showImport, setShowImport] = useState(false)
   const [importMode, setImportMode] = useState<'name' | 'url'>('name')
   const fileRef = useRef<HTMLInputElement>(null)
+  const descRef = useRef<HTMLTextAreaElement>(null)
+  const [showEmoji, setShowEmoji] = useState(false)
   const cameraRef = useRef<HTMLInputElement>(null) 
   const { categories } = useCategories()
 
@@ -406,8 +408,33 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
           <input className="field-input" value={(form as any).website ?? ''} onChange={e => up('website' as any, e.target.value)} placeholder="https://restaurant.com" />
         </div>
         <div style={{ gridColumn: '1/-1' }}>
-          <div className="label">Description / Notes</div>
-          <textarea className="field-input" value={form.description ?? ''} onChange={e => up('description', e.target.value)}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <div className="label" style={{ marginBottom: 0 }}>Description / Notes</div>
+            <button type="button" onClick={() => setShowEmoji(s => !s)}
+              style={{ background: 'none', border: '1px solid var(--line2)', borderRadius: 8, padding: '3px 8px', cursor: 'pointer', fontSize: 16 }}>
+              😊
+            </button>
+          </div>
+          {showEmoji && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: 8, background: 'var(--bg2)', borderRadius: 8, marginBottom: 8, maxHeight: 160, overflowY: 'auto' }}>
+              {['⭐', '🌟', '💫', '✨', '🔥', '❤️', '💛', '💚', '💙', '💜', '🎉', '👍', '👌', '🙌', '💪', '🍽', '☕', '🍷', '🍸', '🥂', '🌿', '🌺', '🌸', '🏖', '🏔', '🗺', '📍', '🚗', '🚶', '🏃', '💆', '🛍', '🎨', '🎭', '🎪', '🏛', '⛩', '🕌', '🕍', '💒', '🏠', '🏡', '🌙', '☀️', '🌈', '❄️', '🌊', '🌴', '🌵', '🦁', '🐠', '🦋', '🎵', '🎶', '📸', '💰', '💎', '🔑', '📞', '💬', '📧', '🌐', '⏰', '📅', '🗓', '✅', '❌', '⚠️', '💡', '🔍', '📝', '🎁', '🏆', '🥇'].map((e: string) => (
+                <button key={e} type="button"
+                  onClick={() => {
+                    const ta = descRef.current
+                    if (!ta) return
+                    const start = ta.selectionStart ?? (form.description ?? '').length
+                    const end = ta.selectionEnd ?? start
+                    const val = (form.description ?? '')
+                    up('description', val.slice(0, start) + e + val.slice(end))
+                    setTimeout(() => { ta.focus(); ta.setSelectionRange(start + e.length, start + e.length) }, 0)
+                  }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, padding: 2, borderRadius: 4 }}>
+                  {e}
+                </button>
+              ))}
+            </div>
+          )}
+          <textarea ref={descRef} className="field-input" value={form.description ?? ''} onChange={e => up('description', e.target.value)}
             placeholder="Impressions, recommandations, horaires, prix…" rows={5} style={{ resize: 'vertical' }} />
         </div>
       </div>
