@@ -16,12 +16,15 @@ async function getCollection(slug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const col = await getCollection(params.slug)
   if (!col) return { title: 'Collection introuvable — Atlas' }
-  const { data: lieuxData } = await supabase.from('lieux').select('photos').in('id', col.lieux_ids)
-  const firstPhoto = (lieuxData || []).find((l: any) => l.photos?.[0])?.photos?.[0] || null
   return {
     title: col.title + ' — Atlas',
     description: col.description || col.title + ' · ' + col.lieux_ids.length + ' lieux',
-    openGraph: { title: col.title + ' — Atlas', description: col.description || '', siteName: 'Atlas — Répertoire de lieux', ...(firstPhoto ? { images: [{ url: firstPhoto, width: 1200, height: 630, alt: col.title }] } : {}) },
+    openGraph: {
+      title: col.title + ' — Atlas',
+      description: col.description || col.title + ' · ' + col.lieux_ids.length + ' lieux',
+      siteName: 'Atlas — Répertoire de lieux',
+      images: [{ url: 'https://atlas-lieux.vercel.app/og-logo.png', width: 512, height: 512, alt: 'Atlas' }],
+    },
   }
 }
 
@@ -123,7 +126,6 @@ export default async function CollectionPage({ params, searchParams }: Props) {
                       {whatsapp && <a href={`https://wa.me/${whatsapp.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener" style={{ padding: '6px 12px', fontSize: 12, border: '1px solid #25D366', borderRadius: 8, color: '#25D366', textDecoration: 'none', background: '#fff', fontFamily: 'system-ui, sans-serif' }}>💬 WhatsApp</a>}
                     </div>
                   )}
-                  {/* Voir la fiche complète → avec paramètre from pour pouvoir revenir */}
                   <a href={`https://atlas-lieux.vercel.app/partager/${l.id}?from=${params.slug}`}
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 12, border: '1px solid rgba(140,90,40,.3)', borderRadius: 8, color: '#8C5A28', textDecoration: 'none', background: '#FDF8F2', fontFamily: 'system-ui, sans-serif', marginTop: 4 }}>
                     Voir la fiche complète →
@@ -134,7 +136,6 @@ export default async function CollectionPage({ params, searchParams }: Props) {
           })}
         </div>
 
-        {/* Footer — sans lien vers l'appli */}
         <div style={{ borderTop: '1px solid rgba(26,24,20,.1)', paddingTop: '1rem', marginTop: '2rem' }}>
           <div style={{ fontSize: 11, color: '#B0AA9E', fontStyle: 'italic' }}>Partagé depuis Atlas</div>
         </div>
