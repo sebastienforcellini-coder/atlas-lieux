@@ -110,9 +110,30 @@ export function CityView({ country, city, lieux, onNavigate, onDelete }: CityPro
 
       {displayed.length === 0
         ? <div className="empty-state"><div>Aucun lieu dans cette catégorie.</div></div>
-        : <div className="grid-cards">
-            {displayed.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} onDelete={onDelete} />)}
-          </div>
+        : activeCat
+          // Filtre actif → affichage plat
+          ? <div className="grid-cards">
+              {displayed.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} onDelete={onDelete} />)}
+            </div>
+          // Par défaut → groupé par catégorie
+          : <div>
+              {CATEGORIES
+                .map(c => ({ cat: c, items: displayed.filter(l => l.categorie === c.id) }))
+                .filter(g => g.items.length > 0)
+                .map(({ cat, items }) => (
+                  <div key={cat.id} style={{ marginBottom: 24 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--mid)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span>{cat.icon}</span>
+                      <span style={{ textTransform: 'uppercase', letterSpacing: 1 }}>{cat.label}</span>
+                      <span style={{ color: 'var(--soft)', fontWeight: 400 }}>({items.length})</span>
+                    </div>
+                    <div className="grid-cards">
+                      {items.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} onDelete={onDelete} />)}
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
       }
     </div>
   )
