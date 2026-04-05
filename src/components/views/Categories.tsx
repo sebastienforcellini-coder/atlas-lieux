@@ -41,7 +41,12 @@ export default function CategoriesView({ onNavigate }: Props) {
   const handleAdd = async () => {
     setError('')
     const label = newLabel.trim()
-    const id = (newId.trim() || label.toLowerCase().replace(/[^a-z0-9]/g, '_')).replace(/\s+/g, '_')
+    const toId = (s: string) => s
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // supprimer accents
+      .replace(/[^a-z0-9]+/g, '_') // remplacer caractères spéciaux par _
+      .replace(/^_+|_+$/g, '') // supprimer _ en début/fin
+    const id = newId.trim() ? toId(newId.trim()) : toId(label)
 
     if (!label) { setError('Le nom est obligatoire.'); return }
     if (categories.find(c => c.id === id)) { setError('Un identifiant identique existe déjà.'); return }
