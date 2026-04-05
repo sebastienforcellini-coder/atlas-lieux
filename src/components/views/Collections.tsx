@@ -33,8 +33,15 @@ function CollectionForm({ lieux, initial, onSave, onCancel }: {
       <input className="field-input" value={desc} onChange={e => setDesc(e.target.value)}
         placeholder="Description courte..." style={{ marginBottom: 12 }} />
 
-      <div className="label" style={{ marginBottom: 8 }}>
-        Lieux à inclure ({selected.length} sélectionné{selected.length !== 1 ? 's' : ''})
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div className="label" style={{ marginBottom: 0 }}>
+          Lieux à inclure ({selected.length} sélectionné{selected.length !== 1 ? 's' : ''})
+        </div>
+        <button type="button" className="btn btn-sm"
+          onClick={() => setSelected(selected.length === lieux.length ? [] : lieux.map(l => l.id))}
+          style={{ fontSize: 11 }}>
+          {selected.length === lieux.length ? '☐ Tout désélectionner' : '☑ Tout sélectionner'}
+        </button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 6, maxHeight: 280, overflowY: 'auto', marginBottom: 14 }}>
         {lieux.map(l => (
