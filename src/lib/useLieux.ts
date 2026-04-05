@@ -27,6 +27,10 @@ function normalize(row: Record<string, unknown>): Lieu {
     favori:    typeof row.favori === 'boolean' ? row.favori : false,
     phone:     typeof row.phone === 'string' ? row.phone : null,
     whatsapp:  typeof row.whatsapp === 'string' ? row.whatsapp : null,
+    email:     typeof row.email === 'string' ? row.email : null,
+    website:   typeof row.website === 'string' ? row.website : null,
+    instagram: typeof row.instagram === 'string' ? row.instagram : null,
+    facebook:  typeof row.facebook === 'string' ? row.facebook : null,
   } as Lieu
 }
 
@@ -97,6 +101,10 @@ export function useLieux() {
       favori: input.favori ?? false,
       phone: (input as any).phone || null,
       whatsapp: (input as any).whatsapp || null,
+      email: (input as any).email || null,
+      website: (input as any).website || null,
+      instagram: (input as any).instagram || null,
+      facebook: (input as any).facebook || null,
     }
     const { data, error } = await supabase.from(TABLE).insert([clean]).select().single()
     if (error) {
