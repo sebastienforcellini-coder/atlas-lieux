@@ -8,7 +8,13 @@ export interface Category {
   position: number
 }
 
-const TABLE = 'categories'
+const TABLE = 'catégories'
+
+const normalizeId = (s: string) => s
+  .toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9]+/g, '_')
+  .replace(/^_+|_+$/g, '')
 
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -19,7 +25,7 @@ export function useCategories() {
       .from(TABLE)
       .select('*')
       .order('position', { ascending: true })
-    setCategories(data || [])
+    setCategories((data || []).map(c => ({ ...c, id: normalizeId(c.id) })))
     setLoading(false)
   }, [])
 
