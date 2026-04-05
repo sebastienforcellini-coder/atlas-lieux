@@ -10,7 +10,7 @@ import { reverseGeocode } from '@/lib/geocode'
 const EMPTY: LieuInput = {
   name: '', country: '', city: '', address: '', description: '',
   photos: [], videos: [], tags: [], gps_lat: '', gps_lng: '',
-  rating: 0, visit_date: '', comments: [], slug: null, categorie: 'autre', favori: false, phone: '', whatsapp: '', email: '', website: '',
+  rating: 0, visit_date: '', comments: [], slug: null, categorie: 'autre', favori: false, phone: '', whatsapp: '', email: '', website: '', instagram: '', facebook: '',
 }
 
 interface Props {
