@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabase'
 import type { Lieu } from '@/types'
-import { CATEGORIES } from '@/types'
 import type { Metadata } from 'next'
 
 interface Props {
@@ -15,6 +14,11 @@ async function getLieu(id: string) {
   // Fallback par id numérique
   const { data: byId } = await supabase.from('lieux').select('*').eq('id', id).single()
   return byId as Lieu | null
+}
+
+async function getCategorie(id: string) {
+  const { data } = await supabase.from('categories').select('*').eq('id', id).single()
+  return data as { id: string; label: string; icon: string } | null
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -56,7 +60,7 @@ export default async function PartagerPage({ params, searchParams }: Props) {
   const website = (l as any).website
   const instagram = (l as any).instagram
   const facebook = (l as any).facebook
-  const cat = CATEGORIES.find(c => c.id === l.categorie)
+  const cat = await getCategorie(l.categorie)
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F2ED', fontFamily: 'Georgia, serif' }}>
