@@ -2,7 +2,7 @@
 import type { Lieu, View } from '@/types'
 import { useState } from 'react'
 import { uniq, plural, Stars, TagsDisplay } from '@/components/UI'
-import { getCat, CATEGORIES } from '@/types'
+import { useCategories } from '@/lib/useCategories'
 
 interface Props {
   lieux: Lieu[]
@@ -169,6 +169,7 @@ export default function Home({ lieux, onNavigate, onDelete }: Props) {
 }
 
 export function LieuCard({ lieu, onClick, onDelete }: { lieu: Lieu; onClick: () => void; onDelete?: (id: number) => void }) {
+  const { getCat } = useCategories()
   const cat = getCat(lieu.categorie)
   return (
     <div className="place-card" onClick={onClick}>
