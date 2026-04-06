@@ -3,6 +3,8 @@ import { useState, useRef } from 'react'
 import type { Lieu, View } from '@/types'
 import { useCollections, type Collection } from '@/lib/useCollections'
 import { useCategories } from '@/lib/useCategories'
+import { uploadPhoto } from '@/lib/supabase'
+import { compressImage } from '@/lib/imageUtils'
 import { LieuCard } from './Home'
 
 interface Props {
@@ -14,7 +16,7 @@ interface Props {
 function CollectionForm({ lieux, initial, onSave, onCancel }: {
   lieux: Lieu[]
   initial?: Collection
-  onSave: (title: string, desc: string, ids: number[]) => void
+  onSave: (title: string, desc: string, ids: number[], cover_url?: string | null) => void
   onCancel: () => void
 }) {
   const [title, setTitle] = useState(initial?.title || '')
@@ -23,9 +25,11 @@ function CollectionForm({ lieux, initial, onSave, onCancel }: {
   const [formSearch, setFormSearch] = useState('')
   const [showEmojiTitle, setShowEmojiTitle] = useState(false)
   const [showEmojiDesc, setShowEmojiDesc] = useState(false)
+  const [coverUrl, setCoverUrl] = useState<string | null>(initial?.cover_url || null)
+  const [uploading, setUploading] = useState(false)
   const titleRef = useRef<HTMLInputElement>(null)
   const descRef = useRef<HTMLInputElement>(null)
-
+  const coverRef = useRef<HTMLInputElement>(null)
 
   const EmojiPalette = ({ onPick }: { onPick: (e: string) => void }) => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: 8, background: 'var(--bg)', border: '1px solid var(--line2)', borderRadius: 8, marginBottom: 6, maxHeight: 120, overflowY: 'auto' }}>
@@ -45,9 +49,17 @@ function CollectionForm({ lieux, initial, onSave, onCancel }: {
     setTimeout(() => { if (el) { el.focus(); el.setSelectionRange(pos + emoji.length, pos + emoji.length) } }, 0)
   }
 
+  const handleCoverUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    setUploading(true)
+    const compressed = await compressImage(files[0])
+    const url = await uploadPhoto(compressed)
+    if (url) setCoverUrl(url)
+    setUploading(false)
+  }
+
   const toggle = (id: number) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
 
-  // Lieux déjà sélectionnés en haut, puis les autres, filtrés par recherche
   const filtered = lieux.filter(l =>
     !formSearch ||
     l.name.toLowerCase().includes(formSearch.toLowerCase()) ||
@@ -76,6 +88,29 @@ function CollectionForm({ lieux, initial, onSave, onCancel }: {
       <input ref={descRef} className="field-input" value={desc} onChange={e => setDesc(e.target.value)}
         placeholder="Description courte..." style={{ marginBottom: 12 }} />
 
+      {/* Photo de couverture */}
+      <div className="label" style={{ marginBottom: 6 }}>Photo de couverture</div>
+      <div style={{ marginBottom: 14 }}>
+        {coverUrl ? (
+          <div style={{ position: 'relative', marginBottom: 8 }}>
+            <img src={coverUrl} alt="cover" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
+            <button
+              type="button"
+              onClick={() => setCoverUrl(null)}
+              style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,.5)', border: 'none', borderRadius: 100, width: 24, height: 24, color: '#fff', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              ✕
+            </button>
+          </div>
+        ) : (
+          <div
+            onClick={() => coverRef.current?.click()}
+            style={{ border: '2px dashed var(--line2)', borderRadius: 8, padding: '16px', textAlign: 'center', cursor: 'pointer', background: 'var(--bg)', fontSize: 13, color: 'var(--mid)' }}>
+            {uploading ? '⏳ Upload en cours...' : '🖼 Choisir une photo de couverture'}
+          </div>
+        )}
+        <input ref={coverRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleCoverUpload(e.target.files)} />
+      </div>
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div className="label" style={{ marginBottom: 0 }}>
           Lieux à inclure ({selected.length} sélectionné{selected.length !== 1 ? 's' : ''})
@@ -87,7 +122,6 @@ function CollectionForm({ lieux, initial, onSave, onCancel }: {
         </button>
       </div>
 
-      {/* Recherche dans le formulaire */}
       <input className="field-input" value={formSearch} onChange={e => setFormSearch(e.target.value)}
         placeholder="🔍 Rechercher un lieu..." style={{ marginBottom: 8 }} />
 
@@ -107,7 +141,7 @@ function CollectionForm({ lieux, initial, onSave, onCancel }: {
 
       <div style={{ display: 'flex', gap: 8 }}>
         <button className="btn" style={{ flex: 1 }} onClick={onCancel}>Annuler</button>
-        <button className="btn btn-accent" style={{ flex: 2 }} onClick={() => title.trim() && onSave(title, desc, selected)} disabled={!title.trim() || selected.length === 0}>
+        <button className="btn btn-accent" style={{ flex: 2 }} onClick={() => title.trim() && onSave(title, desc, selected, coverUrl)} disabled={!title.trim() || selected.length === 0}>
           {initial ? 'Enregistrer' : 'Créer la collection'}
         </button>
       </div>
@@ -125,14 +159,14 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
   const [filterCat, setFilterCat] = useState<string | null>(null)
   const [search, setSearch] = useState('')
 
-  const handleCreate = async (title: string, desc: string, ids: number[]) => {
-    await addCollection(title, desc, ids)
+  const handleCreate = async (title: string, desc: string, ids: number[], cover_url?: string | null) => {
+    await addCollection(title, desc, ids, cover_url)
     setShowForm(false)
   }
 
-  const handleUpdate = async (title: string, desc: string, ids: number[]) => {
+  const handleUpdate = async (title: string, desc: string, ids: number[], cover_url?: string | null) => {
     if (!editing) return
-    await updateCollection(editing.id, title, desc, ids)
+    await updateCollection(editing.id, title, desc, ids, cover_url)
     setEditing(null)
   }
 
@@ -157,7 +191,6 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
         <button className="btn btn-accent btn-sm" onClick={() => setShowForm(s => !s)}>+ Nouvelle</button>
       </div>
 
-      {/* Barre de recherche */}
       <div style={{ marginBottom: 12 }}>
         <input className="field-input" value={search} onChange={e => setSearch(e.target.value)}
           placeholder="🔍 Rechercher un lieu dans les collections..." />
@@ -166,7 +199,6 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
       {showForm && <CollectionForm lieux={lieux} onSave={handleCreate} onCancel={() => setShowForm(false)} />}
       {editing && <CollectionForm lieux={lieux} initial={editing} onSave={handleUpdate} onCancel={() => setEditing(null)} />}
 
-      {/* Filtre par catégorie */}
       {lieux.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
           <button onClick={() => setFilterCat(null)}
@@ -198,27 +230,41 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
               (!search || l.name.toLowerCase().includes(search.toLowerCase()) || l.city.toLowerCase().includes(search.toLowerCase()))
             )
             const isOpen = open === col.id
-
-            // Grouper par catégorie
             const catGroups = categories
               .map(c => ({ cat: c, items: colLieux.filter(l => l.categorie === c.id) }))
               .filter(g => g.items.length > 0)
 
             return (
               <div key={col.id} style={{ border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
-                <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', background: 'var(--bg2)' }} onClick={() => setOpen(isOpen ? null : col.id)}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 17, fontWeight: 300 }}>{col.title}</div>
-                    {col.description && <div style={{ fontSize: 12, color: 'var(--soft)', marginTop: 2 }}>{col.description}</div>}
-                    <div style={{ fontSize: 11, color: 'var(--soft)', marginTop: 3 }}>{colLieux.length} lieu{colLieux.length !== 1 ? 'x' : ''}</div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button className="btn btn-sm" onClick={e => { e.stopPropagation(); handleShare(col) }} style={{ fontSize: 12 }}>
-                      {copied === col.id ? '✓ Copié' : '🔗 Partager'}
-                    </button>
-                    <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setEditing(col) }} style={{ fontSize: 12 }}>✏️</button>
-                    <button className="btn btn-sm btn-danger" onClick={e => { e.stopPropagation(); if (confirm('Supprimer cette collection ?')) deleteCollection(col.id) }} style={{ fontSize: 12 }}>🗑</button>
-                    <span style={{ fontSize: 12, color: 'var(--soft)', alignSelf: 'center' }}>{isOpen ? '▲' : '▼'}</span>
+                <div style={{ cursor: 'pointer' }} onClick={() => setOpen(isOpen ? null : col.id)}>
+                  {col.cover_url && (
+                    <div style={{ position: 'relative', height: 100 }}>
+                      <img src={col.cover_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent, rgba(26,24,20,.6))' }} />
+                      <div style={{ position: 'absolute', bottom: 10, left: 14 }}>
+                        <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 17, fontWeight: 300, color: '#fff' }}>{col.title}</div>
+                        {col.description && <div style={{ fontSize: 11, color: 'rgba(255,255,255,.8)', marginTop: 1 }}>{col.description}</div>}
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg2)' }}>
+                    <div style={{ flex: 1 }}>
+                      {!col.cover_url && (
+                        <>
+                          <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 17, fontWeight: 300 }}>{col.title}</div>
+                          {col.description && <div style={{ fontSize: 12, color: 'var(--soft)', marginTop: 2 }}>{col.description}</div>}
+                        </>
+                      )}
+                      <div style={{ fontSize: 11, color: 'var(--soft)', marginTop: col.cover_url ? 0 : 3 }}>{colLieux.length} lieu{colLieux.length !== 1 ? 'x' : ''}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn-sm" onClick={e => { e.stopPropagation(); handleShare(col) }} style={{ fontSize: 12 }}>
+                        {copied === col.id ? '✓ Copié' : '🔗 Partager'}
+                      </button>
+                      <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setEditing(col) }} style={{ fontSize: 12 }}>✏️</button>
+                      <button className="btn btn-sm btn-danger" onClick={e => { e.stopPropagation(); if (confirm('Supprimer cette collection ?')) deleteCollection(col.id) }} style={{ fontSize: 12 }}>🗑</button>
+                      <span style={{ fontSize: 12, color: 'var(--soft)', alignSelf: 'center' }}>{isOpen ? '▲' : '▼'}</span>
+                    </div>
                   </div>
                 </div>
                 {isOpen && (
@@ -226,11 +272,9 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
                     {colLieux.length === 0
                       ? <div style={{ fontSize: 13, color: 'var(--soft)' }}>Aucun lieu trouvé.</div>
                       : filterCat
-                        // Si filtre actif → affichage plat
                         ? <div className="grid-cards">
                             {colLieux.map(l => <LieuCard key={l.id} lieu={l} onClick={() => onNavigate('detail', { lieuId: l.id })} onDelete={onDelete} />)}
                           </div>
-                        // Par défaut → groupé par catégorie
                         : <div>
                             {catGroups.map(({ cat, items }) => (
                               <div key={cat.id} style={{ marginBottom: 20 }}>

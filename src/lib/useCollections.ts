@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from './supabase'
+import { supabase, uploadPhoto } from './supabase'
+import { compressImage } from './imageUtils'
 
 export interface Collection {
   id: number
@@ -8,6 +9,7 @@ export interface Collection {
   slug: string
   lieux_ids: number[]
   created_at: string
+  cover_url: string | null
 }
 
 const TABLE = 'collections'
@@ -37,15 +39,15 @@ export function useCollections() {
     return () => { supabase.removeChannel(channel) }
   }, [fetchAll])
 
-  const addCollection = useCallback(async (title: string, description: string, lieux_ids: number[]): Promise<string | null> => {
+  const addCollection = useCallback(async (title: string, description: string, lieux_ids: number[], cover_url?: string | null): Promise<string | null> => {
     const slug = toSlugCol(title)
-    const { data, error } = await supabase.from(TABLE).insert([{ title, description: description || null, slug, lieux_ids }]).select().single()
+    const { data, error } = await supabase.from(TABLE).insert([{ title, description: description || null, slug, lieux_ids, cover_url: cover_url || null }]).select().single()
     if (error) { alert('Erreur : ' + error.message); return null }
     return (data as Collection).slug
   }, [])
 
-  const updateCollection = useCallback(async (id: number, title: string, description: string, lieux_ids: number[]) => {
-    await supabase.from(TABLE).update({ title, description: description || null, lieux_ids, updated_at: new Date().toISOString() }).eq('id', id)
+  const updateCollection = useCallback(async (id: number, title: string, description: string, lieux_ids: number[], cover_url?: string | null) => {
+    await supabase.from(TABLE).update({ title, description: description || null, lieux_ids, cover_url: cover_url !== undefined ? cover_url : undefined, updated_at: new Date().toISOString() }).eq('id', id)
   }, [])
 
   const deleteCollection = useCallback(async (id: number) => {
