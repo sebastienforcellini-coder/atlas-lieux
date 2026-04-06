@@ -5,11 +5,6 @@ import type { Lieu, LieuInput } from '@/types'
 
 const TABLE = 'lieux'
 
-function capitalize(s: string): string {
-  if (!s) return s
-  return s.trim().charAt(0).toUpperCase() + s.trim().slice(1).toLowerCase()
-}
-
 function titleCase(s: string): string {
   if (!s) return s
   return s.trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
@@ -18,12 +13,15 @@ function titleCase(s: string): string {
 function normalize(row: Record<string, unknown>): Lieu {
   return {
     ...row,
-    photos:   Array.isArray(row.photos)   ? row.photos   : [],
-    videos:   Array.isArray(row.videos)   ? row.videos   : [],
-    tags:     Array.isArray(row.tags)     ? row.tags     : [],
-    comments: Array.isArray(row.comments) ? row.comments : [],
+    photos:    Array.isArray(row.photos)    ? row.photos    : [],
+    videos:    Array.isArray(row.videos)    ? row.videos    : [],
+    tags:      Array.isArray(row.tags)      ? row.tags      : [],
+    comments:  Array.isArray(row.comments)  ? row.comments  : [],
     rating:    typeof row.rating === 'number' ? row.rating : 0,
-    categorie: typeof row.categorie === 'string' ? row.categorie : 'autre',
+    // Lire depuis la colonne BDD 'catégorie' (avec accent)
+    categorie: typeof (row['catégorie'] ?? row.categorie) === 'string'
+      ? (row['catégorie'] ?? row.categorie) as string
+      : 'autre',
     favori:    typeof row.favori === 'boolean' ? row.favori : false,
     phone:     typeof row.phone === 'string' ? row.phone : null,
     whatsapp:  typeof row.whatsapp === 'string' ? row.whatsapp : null,
@@ -54,7 +52,6 @@ export function useLieux() {
   useEffect(() => {
     fetchAll()
 
-    // Realtime subscription
     const channel = supabase
       .channel('lieux-realtime')
       .on(
@@ -97,7 +94,8 @@ export function useLieux() {
       description: input.description || null,
       gps_lat: input.gps_lat || null,
       gps_lng: input.gps_lng || null,
-      categorie: input.categorie || 'autre',
+      // Envoyer vers la colonne BDD 'catégorie' (avec accent)
+      'catégorie': input.categorie || 'autre',
       favori: input.favori ?? false,
       phone: (input as any).phone || null,
       whatsapp: (input as any).whatsapp || null,
@@ -106,6 +104,9 @@ export function useLieux() {
       instagram: (input as any).instagram || null,
       facebook: (input as any).facebook || null,
     }
+    // Supprimer la clé sans accent pour éviter le doublon
+    delete (clean as any).categorie
+
     const { data, error } = await supabase.from(TABLE).insert([clean]).select().single()
     if (error) {
       console.error('Supabase insert error:', error)
@@ -113,42 +114,45 @@ export function useLieux() {
       alert('Erreur Supabase : ' + error.message)
       return null
     }
-    // Realtime will update state automatically
     return data.id
   }, [])
 
   const updateLieu = useCallback(async (id: number, input: Partial<LieuInput>) => {
     const slug = input.name && input.city ? toSlug(input.name, input.city) : undefined
-    const normalized: Partial<LieuInput> = { ...input }
+    const normalized: Record<string, unknown> = { ...input }
     if (input.country) normalized.country = titleCase(input.country)
     if (input.city) normalized.city = titleCase(input.city)
     if (input.visit_date === '') normalized.visit_date = null
     if (input.address === '') normalized.address = null
     if (input.gps_lat === '') normalized.gps_lat = null
     if (input.gps_lng === '') normalized.gps_lng = null
-    if ((input as any).email === '') (normalized as any).email = null
-    if ((input as any).website === '') (normalized as any).website = null
-    if ((input as any).instagram === '') (normalized as any).instagram = null
-    if ((input as any).facebook === '') (normalized as any).facebook = null
-    // Toujours inclure ces champs dans l'update
-    ;(normalized as any).email = (input as any).email || null
-    ;(normalized as any).website = (input as any).website || null
-    ;(normalized as any).instagram = (input as any).instagram || null
-    ;(normalized as any).facebook = (input as any).facebook || null
-    ;(normalized as any).phone = (input as any).phone || null
-    ;(normalized as any).whatsapp = (input as any).whatsapp || null
+
+    // Mapper categorie → catégorie (nom de colonne BDD avec accent)
+    if ('categorie' in normalized) {
+      normalized['catégorie'] = normalized['categorie'] || 'autre'
+      delete normalized['categorie']
+    }
+
+    // Toujours inclure les champs contact
+    normalized.email    = (input as any).email    || null
+    normalized.website  = (input as any).website  || null
+    normalized.instagram = (input as any).instagram || null
+    normalized.facebook  = (input as any).facebook  || null
+    normalized.phone    = (input as any).phone    || null
+    normalized.whatsapp = (input as any).whatsapp || null
 
     const { error } = await supabase
       .from(TABLE)
       .update({ ...normalized, ...(slug ? { slug } : {}), updated_at: new Date().toISOString() })
       .eq('id', id)
-    if (error) { setError(error.message); return }
-    // Realtime will update state automatically
+    if (error) {
+      console.error('Supabase update error:', error)
+      setError(error.message)
+    }
   }, [])
 
   const deleteLieu = useCallback(async (id: number) => {
     await supabase.from(TABLE).delete().eq('id', id)
-    // Realtime will update state automatically
   }, [])
 
   return { lieux, loading, error, addLieu, updateLieu, deleteLieu, refetch: fetchAll }
