@@ -9,8 +9,12 @@ interface Props {
 }
 
 async function getLieu(id: string) {
-  const { data } = await supabase.from('lieux').select('*').eq('id', id).single()
-  return data as Lieu | null
+  // Cherche par slug d'abord
+  const { data: bySlug } = await supabase.from('lieux').select('*').eq('slug', id).single()
+  if (bySlug) return bySlug as Lieu
+  // Fallback par id numérique
+  const { data: byId } = await supabase.from('lieux').select('*').eq('id', id).single()
+  return byId as Lieu | null
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
