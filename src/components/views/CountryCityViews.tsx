@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import type { Lieu, View } from '@/types'
-import { CATEGORIES } from '@/types'
+import { useCategories } from '@/lib/useCategories'
 import { uniq, plural } from '@/components/UI'
 import { LieuCard } from './Home'
 
@@ -56,13 +56,17 @@ interface CityProps {
 }
 
 export function CityView({ country, city, lieux, onNavigate, onDelete }: CityProps) {
+  const { categories } = useCategories()
   const filtered = lieux.filter(l => l.country === country && l.city === city)
   const [activeCat, setActiveCat] = useState<string | null>(null)
   const [search, setSearch] = useState('')
 
   // Catégories présentes dans cette ville uniquement
-  const catsPresentes = CATEGORIES.filter(c => filtered.some(l => l.categorie === c.id))
-  const displayed = filtered.filter(l => (!activeCat || l.categorie === activeCat) && (!search || l.name.toLowerCase().includes(search.toLowerCase()) || l.tags?.some(t => t.toLowerCase().includes(search.toLowerCase()))))
+  const catsPresentes = categories.filter(c => filtered.some(l => l.categorie === c.id))
+  const displayed = filtered.filter(l =>
+    (!activeCat || l.categorie === activeCat) &&
+    (!search || l.name.toLowerCase().includes(search.toLowerCase()) || l.tags?.some(t => t.toLowerCase().includes(search.toLowerCase())))
+  )
 
   return (
     <div>
@@ -117,7 +121,7 @@ export function CityView({ country, city, lieux, onNavigate, onDelete }: CityPro
             </div>
           // Par défaut → groupé par catégorie
           : <div>
-              {CATEGORIES
+              {categories
                 .map(c => ({ cat: c, items: displayed.filter(l => l.categorie === c.id) }))
                 .filter(g => g.items.length > 0)
                 .map(({ cat, items }) => (
