@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react'
 import type { Lieu, View } from '@/types'
 import { useCollections, type Collection } from '@/lib/useCollections'
-import { CATEGORIES } from '@/types'
+import { useCategories } from '@/lib/useCategories'
 import { LieuCard } from './Home'
 
 interface Props {
@@ -117,6 +117,7 @@ function CollectionForm({ lieux, initial, onSave, onCancel }: {
 
 export default function Collections({ lieux, onNavigate, onDelete }: Props) {
   const { collections, addCollection, updateCollection, deleteCollection } = useCollections()
+  const { categories } = useCategories()
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Collection | null>(null)
   const [open, setOpen] = useState<number | null>(null)
@@ -172,7 +173,7 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
             style={{ padding: '4px 12px', borderRadius: 100, border: '1px solid', fontSize: 12, cursor: 'pointer', borderColor: !filterCat ? 'var(--accent)' : 'var(--line2)', background: !filterCat ? 'var(--accent-bg)' : 'var(--bg)', color: !filterCat ? 'var(--accent)' : 'var(--mid)' }}>
             Tous
           </button>
-          {CATEGORIES.map(c => (
+          {categories.map(c => (
             <button key={c.id} onClick={() => setFilterCat(filterCat === c.id ? null : c.id)}
               style={{ padding: '4px 12px', borderRadius: 100, border: '1px solid', fontSize: 12, cursor: 'pointer', borderColor: filterCat === c.id ? 'var(--accent)' : 'var(--line2)', background: filterCat === c.id ? 'var(--accent-bg)' : 'var(--bg)', color: filterCat === c.id ? 'var(--accent)' : 'var(--mid)' }}>
               {c.icon} {c.label}
@@ -199,7 +200,7 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
             const isOpen = open === col.id
 
             // Grouper par catégorie
-            const catGroups = CATEGORIES
+            const catGroups = categories
               .map(c => ({ cat: c, items: colLieux.filter(l => l.categorie === c.id) }))
               .filter(g => g.items.length > 0)
 

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useMemo } from 'react'
 import type { Lieu, View } from '@/types'
-import { CATEGORIES } from '@/types'
+import { useCategories } from '@/lib/useCategories'
 import { uniq } from '@/components/UI'
 import { LieuCard } from './Home'
 
@@ -19,6 +19,8 @@ export default function AllLieux({ lieux, onNavigate, onDelete }: Props) {
   const [minRating, setMinRating] = useState(0)
   const [tagFilter, setTagFilter] = useState('')
   const [countryFilter, setCountryFilter] = useState('')
+
+  const { categories } = useCategories()
 
   const allTags = useMemo(() => {
     const tags = lieux.flatMap(l => l.tags || [])
@@ -80,7 +82,7 @@ export default function AllLieux({ lieux, onNavigate, onDelete }: Props) {
       {/* Filtres catégories */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: showFilters ? 12 : 16 }}>
         <button onClick={() => setCatFilter('')} style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, cursor: 'pointer', border: '1px solid', borderColor: !catFilter ? 'var(--accent)' : 'var(--line2)', background: !catFilter ? 'var(--accent-bg)' : 'var(--bg)', color: !catFilter ? 'var(--accent)' : 'var(--mid)' }}>Tous</button>
-        {CATEGORIES.map(c => (
+        {categories.map(c => (
           <button key={c.id} onClick={() => setCatFilter(catFilter === c.id ? '' : c.id)} style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, cursor: 'pointer', border: '1px solid', borderColor: catFilter === c.id ? 'var(--accent)' : 'var(--line2)', background: catFilter === c.id ? 'var(--accent-bg)' : 'var(--bg)', color: catFilter === c.id ? 'var(--accent)' : 'var(--mid)', display: 'flex', alignItems: 'center', gap: 3 }}>
             {c.icon} {c.label}
           </button>
@@ -151,7 +153,7 @@ export default function AllLieux({ lieux, onNavigate, onDelete }: Props) {
             </div>
           // Par défaut → groupé par catégorie
           : <div>
-              {CATEGORIES
+              {categories
                 .map(c => ({ cat: c, items: filtered.filter(l => l.categorie === c.id) }))
                 .filter(g => g.items.length > 0)
                 .map(({ cat, items }) => (
