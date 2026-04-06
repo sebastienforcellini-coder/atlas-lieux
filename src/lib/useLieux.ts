@@ -18,10 +18,7 @@ function normalize(row: Record<string, unknown>): Lieu {
     tags:      Array.isArray(row.tags)      ? row.tags      : [],
     comments:  Array.isArray(row.comments)  ? row.comments  : [],
     rating:    typeof row.rating === 'number' ? row.rating : 0,
-    // Lire depuis la colonne BDD 'catégorie' (avec accent)
-    categorie: typeof (row['catégorie'] ?? row.categorie) === 'string'
-      ? (row['catégorie'] ?? row.categorie) as string
-      : 'autre',
+    categorie: typeof row.categorie === 'string' ? row.categorie : 'autre',
     favori:    typeof row.favori === 'boolean' ? row.favori : false,
     phone:     typeof row.phone === 'string' ? row.phone : null,
     whatsapp:  typeof row.whatsapp === 'string' ? row.whatsapp : null,
@@ -94,8 +91,7 @@ export function useLieux() {
       description: input.description || null,
       gps_lat: input.gps_lat || null,
       gps_lng: input.gps_lng || null,
-      // Envoyer vers la colonne BDD 'catégorie' (avec accent)
-      'catégorie': input.categorie || 'autre',
+      categorie: input.categorie || 'autre',
       favori: input.favori ?? false,
       phone: (input as any).phone || null,
       whatsapp: (input as any).whatsapp || null,
@@ -104,8 +100,6 @@ export function useLieux() {
       instagram: (input as any).instagram || null,
       facebook: (input as any).facebook || null,
     }
-    // Supprimer la clé sans accent pour éviter le doublon
-    delete (clean as any).categorie
 
     const { data, error } = await supabase.from(TABLE).insert([clean]).select().single()
     if (error) {
@@ -126,20 +120,13 @@ export function useLieux() {
     if (input.address === '') normalized.address = null
     if (input.gps_lat === '') normalized.gps_lat = null
     if (input.gps_lng === '') normalized.gps_lng = null
-
-    // Mapper categorie → catégorie (nom de colonne BDD avec accent)
-    if ('categorie' in normalized) {
-      normalized['catégorie'] = normalized['categorie'] || 'autre'
-      delete normalized['categorie']
-    }
-
-    // Toujours inclure les champs contact
-    normalized.email    = (input as any).email    || null
-    normalized.website  = (input as any).website  || null
+    normalized.categorie = (input as any).categorie || 'autre'
+    normalized.email     = (input as any).email     || null
+    normalized.website   = (input as any).website   || null
     normalized.instagram = (input as any).instagram || null
     normalized.facebook  = (input as any).facebook  || null
-    normalized.phone    = (input as any).phone    || null
-    normalized.whatsapp = (input as any).whatsapp || null
+    normalized.phone     = (input as any).phone     || null
+    normalized.whatsapp  = (input as any).whatsapp  || null
 
     const { error } = await supabase
       .from(TABLE)
