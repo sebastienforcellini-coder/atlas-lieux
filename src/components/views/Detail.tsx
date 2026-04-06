@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import type { Lieu, View } from '@/types'
 import { Stars, Lightbox, fd, ytEmbed, gid } from '@/components/UI'
-import { getCat } from '@/types'
+import { useCategories } from '@/lib/useCategories'
 
 interface Props {
   lieu: Lieu
@@ -89,6 +89,7 @@ export default function Detail({ lieu, onNavigate, onUpdate, onDelete, onShare }
     await onUpdate(lieu.id, { favori: !lieu.favori })
   }
 
+  const { getCat } = useCategories()
   const cat = getCat(lieu.categorie)
 
   return (
