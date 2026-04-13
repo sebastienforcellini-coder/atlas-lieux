@@ -1,20 +1,43 @@
-import { supabase } from '@/lib/supabase'
-import type { Lieu } from '@/types'
+import { createClient } from '@supabase/supabase-js'
+import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import React from 'react'
+import type { Lieu } from '@/types'
 
-interface Props {
-  params: { slug: string }
-  searchParams: { cat?: string }
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+interface Collection {
+  id: string
+  title: string
+  description?: string
+  slug: string
+  lieux_ids: string[]
+  cover_url?: string | null
 }
 
-async function getCollection(slug: string) {
+interface Props { params: { slug: string } }
+
+async function getCollection(slug: string): Promise<Collection | null> {
   const { data } = await supabase.from('collections').select('*').eq('slug', slug).single()
-  return data
+  return data ?? null
+}
+
+async function getLieux(ids: string[]): Promise<Lieu[]> {
+  if (!ids.length) return []
+  const { data } = await supabase.from('lieux').select('*').in('id', ids)
+  return (data ?? []).sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
 }
 
 async function getCategories() {
-  const { data } = await supabase.from('categories').select('*').order('position', { ascending: true })
-  return (data || []) as { id: string; label: string; icon: string }[]
+  const { data } = await supabase.from('catégories').select('identifiant, étiquette, icône')
+  return (data ?? []).map((c: any) => ({
+    id: c.identifiant as string,
+    label: c['étiquette'] as string,
+    icon: c['icône'] as string,
+  }))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -27,7 +50,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: col.title + ' — Atlas',
       description: col.description || col.title + ' · ' + col.lieux_ids.length + ' lieux',
       siteName: 'Atlas — Répertoire de lieux',
-      images: [{ url: 'https://atlas-lieux.vercel.app/og-logo.png', width: 512, height: 512, alt: 'Atlas' }],
+      images: col.cover_url
+        ? [{ url: col.cover_url, width: 1200, height: 630, alt: col.title }]
+        : [{ url: 'https://atlas-lieux.vercel.app/og-logo.png', width: 512, height: 512, alt: 'Atlas' }],
     },
   }
 }
@@ -80,62 +105,36 @@ function LieuCard({ l, slug, cat }: { l: Lieu; slug: string; cat?: { id: string;
           </div>
         )}
 
-        {hasGps && (
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 9, color: '#B0AA9E', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1.5, fontFamily: 'system-ui, sans-serif' }}>Navigation</div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {[
-                { label: '🗺 Maps', href: `https://maps.google.com/?q=${l.gps_lat},${l.gps_lng}` },
-                { label: '🍎 Plans', href: `https://maps.apple.com/?q=${l.gps_lat},${l.gps_lng}&ll=${l.gps_lat},${l.gps_lng}` },
-                { label: '🚗 Waze', href: `https://waze.com/ul?ll=${l.gps_lat},${l.gps_lng}&navigate=yes` },
-              ].map(({ label, href }) => (
-                <a key={label} href={href} target="_blank" rel="noopener" style={btn()}>{label}</a>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {(phone || whatsapp || email || website || instagram || facebook) && (
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-            {phone && <a href={`tel:${phone}`} style={btn()}>📞 {phone}</a>}
-            {whatsapp && <a href={`https://wa.me/${whatsapp.replace(/[^0-9]/g,'')}`} target="_blank" rel="noopener" style={btn({ border: '1px solid #25D366', color: '#25D366', background: '#fff' })}>💬 WhatsApp</a>}
-            {email && <a href={`mailto:${email}`} style={btn()}>✉️ {email}</a>}
-            {website && <a href={website} target="_blank" rel="noopener" style={btn({ color: '#8C5A28', background: '#FDF8F2', border: '1px solid rgba(140,90,40,.2)' })}>🌐 Site web</a>}
-            {instagram && <a href={instagram.startsWith('http') ? instagram : `https://instagram.com/${instagram.replace('@','')}`} target="_blank" rel="noopener" style={btn({ border: '1px solid rgba(193,53,132,.3)', color: '#C13584', background: '#fff8fc' })}>📸 Instagram</a>}
-            {facebook && <a href={facebook.startsWith('http') ? facebook : `https://facebook.com/${facebook}`} target="_blank" rel="noopener" style={btn({ border: '1px solid rgba(24,119,242,.3)', color: '#1877F2', background: '#f0f6ff' })}>👥 Facebook</a>}
-          </div>
-        )}
-
-        <a href={`https://atlas-lieux.vercel.app/partager/${l.slug || l.id}?from=${slug}`}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 12, border: '1px solid rgba(140,90,40,.3)', borderRadius: 8, color: '#8C5A28', textDecoration: 'none', background: '#FDF8F2', fontFamily: 'system-ui, sans-serif', marginTop: 4 }}>
-          Voir la fiche complète →
-        </a>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+          {hasGps && (
+            <a href={`https://www.google.com/maps?q=${l.gps_lat},${l.gps_lng}`} target="_blank" rel="noopener noreferrer" style={btn()}>📍 GPS</a>
+          )}
+          {phone && <a href={`tel:${phone}`} style={btn()}>📞 Appeler</a>}
+          {whatsapp && <a href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={btn({ background: '#25D366', color: '#fff', border: 'none' })}>💬 WhatsApp</a>}
+          {email && <a href={`mailto:${email}`} style={btn()}>✉️ Email</a>}
+          {website && <a href={website} target="_blank" rel="noopener noreferrer" style={btn()}>🌐 Site web</a>}
+          {instagram && <a href={instagram} target="_blank" rel="noopener noreferrer" style={btn()}>📷 Instagram</a>}
+          {facebook && <a href={facebook} target="_blank" rel="noopener noreferrer" style={btn()}>👤 Facebook</a>}
+          <a href={`/partager/${l.slug || l.id}`} style={btn({ background: '#1A1814', color: '#fff', border: 'none' })}>Voir la fiche →</a>
+        </div>
       </div>
     </div>
   )
 }
 
-export default async function CollectionPage({ params, searchParams }: Props) {
-  const [col, categories] = await Promise.all([
-    getCollection(params.slug),
-    getCategories(),
-  ])
+export default async function CollectionPage({ params, searchParams }: Props & { searchParams: { cat?: string } }) {
+  const col = await getCollection(params.slug)
+  if (!col) notFound()
 
-  if (!col) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F2ED', fontFamily: 'Georgia, serif' }}>
-      <div style={{ textAlign: 'center', color: '#B0AA9E' }}>
-        <div style={{ fontSize: 40, marginBottom: 12 }}>📚</div>
-        <div>Collection introuvable</div>
-      </div>
-    </div>
-  )
+  const allLieux = await getLieux(col.lieux_ids ?? [])
+  const categories = await getCategories()
 
-  const { data: lieuxData } = await supabase.from('lieux').select('*').in('id', col.lieux_ids)
-  const allLieux = (lieuxData || []) as Lieu[]
   const activeCat = searchParams.cat || 'all'
   const lieux = activeCat === 'all' ? allLieux : allLieux.filter(l => l.categorie === activeCat)
+
+  const collectionUrl = `/collection/${params.slug}`
+
   const catsPresentes = categories.filter(c => allLieux.some(l => l.categorie === c.id))
-  const collectionUrl = `https://atlas-lieux.vercel.app/collection/${params.slug}`
 
   const catGroups = categories
     .map(c => ({ cat: c, items: lieux.filter(l => l.categorie === c.id) }))
@@ -147,25 +146,69 @@ export default async function CollectionPage({ params, searchParams }: Props) {
     fontSize: 12, textDecoration: 'none', fontFamily: 'system-ui, sans-serif', display: 'inline-block',
   })
 
+  const hasCover = !!col.cover_url
+
   return (
     <div style={{ minHeight: '100vh', background: '#F5F2ED', fontFamily: 'Georgia, serif' }}>
       <div style={{ maxWidth: 640, margin: '0 auto', padding: '2rem 1.25rem 4rem' }}>
 
-        {/* Header */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(26,24,20,.08)', boxShadow: '0 2px 16px rgba(26,24,20,.06)', overflow: 'hidden', marginBottom: 24 }}>
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(26,24,20,.08)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 15, color: '#1A1814', fontWeight: 300 }}>Atlas</span>
-            <div style={{ width: 1, height: 14, background: 'rgba(26,24,20,.15)' }} />
-            <span style={{ fontSize: 11, color: '#B0AA9E', fontFamily: 'system-ui, sans-serif', letterSpacing: 1 }}>Collection</span>
-          </div>
-          <div style={{ padding: '24px 20px', textAlign: 'center' }}>
-            <div style={{ fontSize: 30, fontStyle: 'italic', fontWeight: 300, lineHeight: 1.2, color: '#1A1814', marginBottom: 8 }}>{col.title}</div>
-            {col.description && <p style={{ fontSize: 14, color: '#6B6560', margin: '0 0 10px', lineHeight: 1.6 }}>{col.description}</p>}
-            <div style={{ fontSize: 11, color: '#B0AA9E', fontFamily: 'system-ui, sans-serif' }}>{allLieux.length} lieu{allLieux.length !== 1 ? 'x' : ''}</div>
+        {/* ── HEADER avec photo de couverture ── */}
+        <div style={{ borderRadius: 16, overflow: 'hidden', marginBottom: 24, position: 'relative', boxShadow: '0 2px 16px rgba(26,24,20,.1)' }}>
+
+          {/* Photo de fond */}
+          {hasCover && (
+            <img
+              src={col.cover_url!}
+              alt={col.title}
+              style={{
+                position: 'absolute', inset: 0,
+                width: '100%', height: '100%',
+                objectFit: 'cover', objectPosition: 'center',
+              }}
+            />
+          )}
+
+          {/* Overlay */}
+          <div style={{
+            position: 'relative', zIndex: 1,
+            background: hasCover
+              ? 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.65) 100%)'
+              : '#fff',
+            border: hasCover ? 'none' : '1px solid rgba(26,24,20,.08)',
+            minHeight: hasCover ? 220 : 'auto',
+            display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+          }}>
+
+            {/* Barre Atlas | Collection */}
+            <div style={{
+              padding: '14px 20px',
+              borderBottom: `1px solid ${hasCover ? 'rgba(255,255,255,.2)' : 'rgba(26,24,20,.08)'}`,
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 15, color: hasCover ? '#fff' : '#1A1814', fontWeight: 300 }}>Atlas</span>
+              <div style={{ width: 1, height: 14, background: hasCover ? 'rgba(255,255,255,.4)' : 'rgba(26,24,20,.15)' }} />
+              <span style={{ fontSize: 11, color: hasCover ? 'rgba(255,255,255,.7)' : '#B0AA9E', fontFamily: 'system-ui, sans-serif', letterSpacing: 1 }}>Collection</span>
+            </div>
+
+            {/* Titre + description + nb lieux */}
+            <div style={{ padding: '24px 20px', textAlign: 'center' }}>
+              <div style={{ fontSize: 30, fontStyle: 'italic', fontWeight: 300, lineHeight: 1.2, color: hasCover ? '#fff' : '#1A1814', marginBottom: 8, textShadow: hasCover ? '0 2px 8px rgba(0,0,0,0.4)' : 'none' }}>
+                {col.title}
+              </div>
+              {col.description && (
+                <p style={{ fontSize: 14, color: hasCover ? 'rgba(255,255,255,.85)' : '#6B6560', margin: '0 0 10px', lineHeight: 1.6 }}>
+                  {col.description}
+                </p>
+              )}
+              <div style={{ fontSize: 11, color: hasCover ? 'rgba(255,255,255,.6)' : '#B0AA9E', fontFamily: 'system-ui, sans-serif' }}>
+                {allLieux.length} lieu{allLieux.length !== 1 ? 'x' : ''}
+              </div>
+            </div>
+
           </div>
         </div>
 
-        {/* Filtres */}
+        {/* Filtres catégories */}
         {catsPresentes.length > 1 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
             <a href={collectionUrl} style={btnStyle(activeCat === 'all')}>Tous</a>
