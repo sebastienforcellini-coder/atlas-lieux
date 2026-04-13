@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#FDFCFA"/>
+  <g transform="translate(32, 32)">
+    <circle cx="0" cy="-4" r="22" fill="none" stroke="#E8E4DC" stroke-width="0.8"/>
+    <circle cx="0" cy="-4" r="15" fill="none" stroke="#EDEAE3" stroke-width="0.5"/>
+    <circle cx="0" cy="-4" r="8" fill="#FDF9F4" stroke="#EDEAE3" stroke-width="0.5"/>
+    <!-- 8 micro -->
+    <g fill="#EDE8E0">
+      <polygon points="0,-24 -1,-15 0,-16 1,-15" transform="rotate(22.5 0 -4)"/>
+      <polygon points="0,-24 -1,-15 0,-16 1,-15" transform="rotate(67.5 0 -4)"/>
+      <polygon points="0,-24 -1,-15 0,-16 1,-15" transform="rotate(112.5 0 -4)"/>
+      <polygon points="0,-24 -1,-15 0,-16 1,-15" transform="rotate(157.5 0 -4)"/>
+      <polygon points="0,-24 -1,-15 0,-16 1,-15" transform="rotate(202.5 0 -4)"/>
+      <polygon points="0,-24 -1,-15 0,-16 1,-15" transform="rotate(247.5 0 -4)"/>
+      <polygon points="0,-24 -1,-15 0,-16 1,-15" transform="rotate(292.5 0 -4)"/>
+      <polygon points="0,-24 -1,-15 0,-16 1,-15" transform="rotate(337.5 0 -4)"/>
+    </g>
+    <!-- diagonales -->
+    <polygon points="0,-24 -2,-15 0,-16.5 2,-15" fill="#C8C2B8" transform="rotate(45 0 -4)"/>
+    <polygon points="0,-24 -2,-15 0,-16.5 2,-15" fill="#C8C2B8" transform="rotate(135 0 -4)"/>
+    <polygon points="0,-24 -2,-15 0,-16.5 2,-15" fill="#C8C2B8" transform="rotate(225 0 -4)"/>
+    <polygon points="0,-24 -2,-15 0,-16.5 2,-15" fill="#C8C2B8" transform="rotate(315 0 -4)"/>
+    <!-- branches principales -->
+    <polygon points="0,-24 -3,-9 0,-12 3,-9" fill="#8C5A28"/>
+    <polygon points="0,16 -3,1 0,4 3,1" fill="#8C5A28"/>
+    <polygon points="20,-4 5,-7 8,-4 5,-1" fill="#8C5A28"/>
+    <polygon points="-20,-4 -5,-7 -8,-4 -5,-1" fill="#8C5A28"/>
+    <!-- centre -->
+    <circle cx="0" cy="-4" r="4" fill="#FDF9F4" stroke="#8C5A28" stroke-width="1"/>
+    <circle cx="0" cy="-4" r="1.5" fill="#8C5A28"/>
+    <!-- N -->
+    <text x="0" y="-26" text-anchor="middle" font-family="Georgia, serif" font-size="7" fill="#8C5A28" font-weight="700">N</text>
+  </g>
+  <!-- A en bas -->
+  <text x="32" y="60" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-weight="300" font-size="10" fill="#1A1814">Atlas</text>
+</svg>
