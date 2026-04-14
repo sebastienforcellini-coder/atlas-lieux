@@ -17,9 +17,13 @@ async function getLieu(id: string) {
 }
 
 async function getCategorie(identifiant: string) {
-  const { data } = await supabase.from('catégories').select('*').eq('identifiant', identifiant).single()
-  if (data) return { id: data.identifiant, label: data['étiquette'], icon: data['icône'] }
-  return null
+  const { data } = await supabase
+    .from('catégories')
+    .select('identifiant, étiquette, icône')
+    .eq('identifiant', identifiant)
+    .single()
+  if (!data) return null
+  return { id: data.identifiant, label: data['étiquette'], icon: data['icône'] }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -75,18 +79,19 @@ export default async function PartagerPage({ params, searchParams }: Props) {
     <div style={{ minHeight: '100vh', background: '#F5F2ED', fontFamily: 'Georgia, serif' }}>
       <div style={{ maxWidth: 600, margin: '0 auto', padding: '2rem 1.25rem 4rem' }}>
 
-        {/* Carte principale */}
         <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(26,24,20,.08)', boxShadow: '0 2px 16px rgba(26,24,20,.06)' }}>
 
-          {/* Header Atlas */}
+          {/* Header Atlas | Catégorie */}
           <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(26,24,20,.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 15, color: '#1A1814', fontWeight: 300 }}>Atlas</span>
               <div style={{ width: 1, height: 14, background: 'rgba(26,24,20,.15)' }} />
-              {cat && (
+              {cat ? (
                 <span style={{ fontSize: 11, color: '#8C5A28', background: '#FDF8F2', padding: '2px 10px', borderRadius: 100, border: '1px solid rgba(140,90,40,.2)', fontFamily: 'system-ui, sans-serif' }}>
                   {cat.icon} {cat.label}
                 </span>
+              ) : (
+                <span style={{ fontSize: 11, color: '#B0AA9E', fontFamily: 'system-ui, sans-serif', letterSpacing: 1 }}>Lieu</span>
               )}
             </div>
             {fromSlug && (
@@ -108,17 +113,13 @@ export default async function PartagerPage({ params, searchParams }: Props) {
               <div style={{ fontSize: 9, letterSpacing: 2, color: '#B0AA9E', textTransform: 'uppercase', marginBottom: 8, fontFamily: 'system-ui, sans-serif' }}>
                 Photos ({photos.length})
               </div>
-              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
                 {photos.slice(1).map((p: string, i: number) => (
                   <img
                     key={i}
                     src={p}
                     alt={`${l.name} ${i + 2}`}
-                    style={{
-                      width: 100, height: 100, objectFit: 'cover',
-                      borderRadius: 8, flexShrink: 0, display: 'block',
-                      border: '1px solid rgba(26,24,20,.08)'
-                    }}
+                    style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 8, flexShrink: 0, display: 'block', border: '1px solid rgba(26,24,20,.08)' }}
                   />
                 ))}
               </div>
@@ -170,7 +171,7 @@ export default async function PartagerPage({ params, searchParams }: Props) {
             </div>
           )}
 
-          {/* Commentaires */}
+          {/* Commentaires / Notes */}
           {l.comments && l.comments.length > 0 && (
             <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(26,24,20,.06)' }}>
               <div style={{ fontSize: 9, letterSpacing: 2, color: '#B0AA9E', textTransform: 'uppercase', marginBottom: 10, fontFamily: 'system-ui, sans-serif' }}>Notes</div>
