@@ -2,9 +2,11 @@ import { supabase } from '@/lib/supabase'
 import type { Lieu } from '@/types'
 import type { Metadata } from 'next'
 
+export const revalidate = 0
+
 interface Props {
   params: { id: string }
-  searchParams: { from?: string }
+  searchParams: { from?: string; v?: string }
 }
 
 async function getLieu(id: string) {
@@ -14,9 +16,10 @@ async function getLieu(id: string) {
   return byId as Lieu | null
 }
 
-async function getCategorie(id: string) {
-  const { data } = await supabase.from('categories').select('*').eq('id', id).single()
-  return data as { id: string; label: string; icon: string } | null
+async function getCategorie(identifiant: string) {
+  const { data } = await supabase.from('catégories').select('*').eq('identifiant', identifiant).single()
+  if (data) return { id: data.identifiant, label: data['étiquette'], icon: data['icône'] }
+  return null
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -41,7 +44,7 @@ function starsStr(n: number) { return '★'.repeat(n) + '☆'.repeat(5 - n) }
 const btn = (extra?: React.CSSProperties): React.CSSProperties => ({
   padding: '8px 14px', fontSize: 13, border: '1px solid rgba(26,24,20,.15)',
   borderRadius: 8, color: '#1A1814', textDecoration: 'none',
-  background: '#F5F2ED', fontFamily: 'system-ui, sans-serif', ...extra,
+  background: '#F5F2ED', fontFamily: 'system-ui, sans-serif', display: 'inline-block', ...extra,
 })
 
 export default async function PartagerPage({ params, searchParams }: Props) {
@@ -64,7 +67,9 @@ export default async function PartagerPage({ params, searchParams }: Props) {
   const website = (l as any).website
   const instagram = (l as any).instagram
   const facebook = (l as any).facebook
-  const cat = await getCategorie(l.categorie)
+  const cat = l.categorie ? await getCategorie(l.categorie) : null
+  const photos = l.photos ?? []
+  const hasMultiplePhotos = photos.length > 1
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F2ED', fontFamily: 'Georgia, serif' }}>
@@ -92,9 +97,32 @@ export default async function PartagerPage({ params, searchParams }: Props) {
             )}
           </div>
 
-          {/* Photo */}
-          {l.photos?.[0] && (
-            <img src={l.photos[0]} alt={l.name} style={{ width: '100%', height: 240, objectFit: 'cover', display: 'block' }} />
+          {/* Photo principale */}
+          {photos[0] && (
+            <img src={photos[0]} alt={l.name} style={{ width: '100%', height: 240, objectFit: 'cover', display: 'block' }} />
+          )}
+
+          {/* Galerie photos supplémentaires */}
+          {hasMultiplePhotos && (
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(26,24,20,.06)', background: '#FDFCFA' }}>
+              <div style={{ fontSize: 9, letterSpacing: 2, color: '#B0AA9E', textTransform: 'uppercase', marginBottom: 8, fontFamily: 'system-ui, sans-serif' }}>
+                Photos ({photos.length})
+              </div>
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+                {photos.slice(1).map((p: string, i: number) => (
+                  <img
+                    key={i}
+                    src={p}
+                    alt={`${l.name} ${i + 2}`}
+                    style={{
+                      width: 100, height: 100, objectFit: 'cover',
+                      borderRadius: 8, flexShrink: 0, display: 'block',
+                      border: '1px solid rgba(26,24,20,.08)'
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Infos principales */}
@@ -123,12 +151,37 @@ export default async function PartagerPage({ params, searchParams }: Props) {
             </div>
           )}
 
+          {/* Date de visite */}
+          {l.visit_date && (
+            <div style={{ padding: '12px 20px', background: '#FDFCFA', borderBottom: '1px solid rgba(26,24,20,.06)', display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span style={{ fontSize: 14 }}>📅</span>
+              <span style={{ fontSize: 12, color: '#6B6560', fontFamily: 'system-ui, sans-serif' }}>
+                Visité le {new Date(l.visit_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </span>
+            </div>
+          )}
+
           {/* Tags */}
           {l.tags?.length > 0 && (
             <div style={{ padding: '12px 20px', display: 'flex', flexWrap: 'wrap', gap: 5, borderBottom: '1px solid rgba(26,24,20,.06)' }}>
               {l.tags.map((t: string) => (
                 <span key={t} style={{ padding: '3px 10px', fontSize: 11, border: '1px solid rgba(26,24,20,.1)', borderRadius: 100, color: '#8C7A6B', fontFamily: 'system-ui, sans-serif' }}>{t}</span>
               ))}
+            </div>
+          )}
+
+          {/* Commentaires */}
+          {l.comments && l.comments.length > 0 && (
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(26,24,20,.06)' }}>
+              <div style={{ fontSize: 9, letterSpacing: 2, color: '#B0AA9E', textTransform: 'uppercase', marginBottom: 10, fontFamily: 'system-ui, sans-serif' }}>Notes</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {l.comments.map((c: any, i: number) => (
+                  <div key={i} style={{ background: '#FDFCFA', borderRadius: 8, padding: '10px 12px', border: '1px solid rgba(26,24,20,.06)' }}>
+                    <p style={{ fontSize: 13, color: '#4A4540', lineHeight: 1.6, margin: '0 0 4px' }}>{c.text}</p>
+                    {c.date && <div style={{ fontSize: 10, color: '#B0AA9E', fontFamily: 'system-ui, sans-serif' }}>{new Date(c.date).toLocaleDateString('fr-FR')}</div>}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
