@@ -19,7 +19,7 @@ async function getLieu(id: string) {
 async function getCategorie(identifiant: string) {
   const { data } = await supabase
     .from('catégories')
-    .select('identifiant, étiquette, icône')
+    .select('*')
     .eq('identifiant', identifiant)
     .single()
   if (!data) return null
