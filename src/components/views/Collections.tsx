@@ -65,9 +65,35 @@ function CollectionForm({ lieux, initial, onSave, onCancel }: {
     l.name.toLowerCase().includes(formSearch.toLowerCase()) ||
     l.city.toLowerCase().includes(formSearch.toLowerCase())
   )
+
+  // Déduire la ville et le pays dominants des lieux déjà sélectionnés
+  const selectedLieux = lieux.filter(l => selected.includes(l.id))
+  const cityCount: Record<string, number> = {}
+  const countryCount: Record<string, number> = {}
+  selectedLieux.forEach(l => {
+    if (l.city) cityCount[l.city] = (cityCount[l.city] || 0) + 1
+    if (l.country) countryCount[l.country] = (countryCount[l.country] || 0) + 1
+  })
+  const dominantCity = Object.entries(cityCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+  const dominantCountry = Object.entries(countryCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+
+  // Non sélectionnés en haut : ville dominante d'abord, puis même pays, puis reste — triés alphabétiquement dans chaque groupe
+  const nonSelected = filtered
+    .filter(l => !selected.includes(l.id))
+    .sort((a, b) => {
+      const aCity = a.city === dominantCity ? 0 : a.country === dominantCountry ? 1 : 2
+      const bCity = b.city === dominantCity ? 0 : b.country === dominantCountry ? 1 : 2
+      if (aCity !== bCity) return aCity - bCity
+      // Même groupe → tri alphabétique par ville puis par nom
+      const cityCompare = (a.city ?? '').localeCompare(b.city ?? '')
+      if (cityCompare !== 0) return cityCompare
+      return (a.name ?? '').localeCompare(b.name ?? '')
+    })
+
+  // Sélectionnés en bas
   const sortedLieux = [
+    ...nonSelected,
     ...filtered.filter(l => selected.includes(l.id)),
-    ...filtered.filter(l => !selected.includes(l.id)),
   ]
 
   return (
