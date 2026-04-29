@@ -15,6 +15,8 @@ import MapView from '@/components/views/MapView'
 import { ConfirmModal, Toast } from '@/components/UI'
 import type { Lieu, LieuInput, View, NavState } from '@/types'
 
+const PIN = '2266'
+
 const VIEW_LABELS: Record<View, string> = {
   home: 'Accueil', all: 'Tous les lieux',
   country: 'Pays', city: 'Ville',
@@ -23,12 +25,106 @@ const VIEW_LABELS: Record<View, string> = {
   favoris: 'Favoris', collections: 'Collections', categories: 'Catégories',
 }
 
+function PinScreen({ onUnlock }: { onUnlock: () => void }) {
+  const [pin, setPin] = useState('')
+  const [error, setError] = useState(false)
+
+  const handleSubmit = () => {
+    if (pin === PIN) {
+      localStorage.setItem('atlas_pin', 'ok')
+      onUnlock()
+    } else {
+      setError(true)
+      setPin('')
+    }
+  }
+
+  return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', background: '#F5F2ED', fontFamily: 'Georgia, serif',
+    }}>
+      <div style={{
+        background: '#fff', borderRadius: 20, padding: '40px 32px',
+        width: '100%', maxWidth: 340,
+        boxShadow: '0 4px 32px rgba(26,24,20,.1)',
+        border: '1px solid rgba(26,24,20,.08)', textAlign: 'center',
+      }}>
+        <div style={{ fontSize: 36, marginBottom: 8 }}>🧭</div>
+        <div style={{ fontStyle: 'italic', fontSize: 26, fontWeight: 300, color: '#1A1814', marginBottom: 4 }}>
+          Atlas
+        </div>
+        <div style={{
+          fontSize: 11, letterSpacing: 3, color: '#B0AA9E',
+          textTransform: 'uppercase', fontFamily: 'system-ui, sans-serif', marginBottom: 32,
+        }}>
+          Répertoire de lieux
+        </div>
+
+        <label style={{
+          display: 'block', fontSize: 12, color: '#8C7A6B',
+          fontFamily: 'system-ui, sans-serif', letterSpacing: 1,
+          textTransform: 'uppercase', marginBottom: 10,
+        }}>
+          Code d'accès
+        </label>
+
+        <input
+          type="password"
+          inputMode="numeric"
+          maxLength={6}
+          value={pin}
+          onChange={e => { setPin(e.target.value); setError(false) }}
+          onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+          autoFocus
+          placeholder="••••"
+          style={{
+            width: '100%', padding: '14px 16px', borderRadius: 12,
+            border: error ? '2px solid #e05a5a' : '1px solid rgba(26,24,20,.15)',
+            fontSize: 24, textAlign: 'center', letterSpacing: 8,
+            fontFamily: 'system-ui, sans-serif', outline: 'none',
+            background: '#FDFCFA', boxSizing: 'border-box', color: '#1A1814', marginBottom: 8,
+          }}
+        />
+
+        {error && (
+          <div style={{ fontSize: 12, color: '#e05a5a', marginBottom: 12, fontFamily: 'system-ui, sans-serif' }}>
+            Code incorrect, réessaie.
+          </div>
+        )}
+
+        <button
+          onClick={handleSubmit}
+          style={{
+            width: '100%', padding: '14px', borderRadius: 12, border: 'none',
+            background: '#8C5A28', color: '#fff', fontSize: 15,
+            fontFamily: 'Georgia, serif', fontStyle: 'italic',
+            cursor: 'pointer', fontWeight: 300, marginTop: 8,
+          }}
+        >
+          Accéder →
+        </button>
+
+        <div style={{ marginTop: 24, fontSize: 11, color: '#D0C8BE', fontFamily: 'system-ui, sans-serif' }}>
+          Accès privé
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AtlasPage() {
   const { lieux, loading, addLieu, updateLieu, deleteLieu } = useLieux()
   const [nav, setNav] = useState<NavState>({ view: 'home' })
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [unlocked, setUnlocked] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    const ok = localStorage.getItem('atlas_pin') === 'ok'
+    setUnlocked(ok)
+  }, [])
 
   useEffect(() => {
     if (toast) { const t = setTimeout(() => setToast(null), 2200); return () => clearTimeout(t) }
@@ -65,6 +161,12 @@ export default function AtlasPage() {
   }
 
   const currentLieu = nav.lieuId ? lieux.find(l => l.id === nav.lieuId) : null
+
+  // Chargement initial
+  if (unlocked === null) return <div className="loading-screen">CHARGEMENT...</div>
+
+  // Ecran PIN
+  if (!unlocked) return <PinScreen onUnlock={() => setUnlocked(true)} />
 
   if (loading) return <div className="loading-screen">CHARGEMENT...</div>
 
