@@ -279,8 +279,8 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
               <div key={col.id} style={{ border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
                 <div style={{ cursor: 'pointer' }} onClick={() => setOpen(isOpen ? null : col.id)}>
                   {col.cover_url && (
-                    <div style={{ position: 'relative', height: 100 }}>
-                      <img src={col.cover_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    <div style={{ position: 'relative', height: 200 }}>
+                      <img src={col.cover_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
                       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent, rgba(26,24,20,.6))' }} />
                       <div style={{ position: 'absolute', bottom: 10, left: 14 }}>
                         <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 17, fontWeight: 300, color: '#fff' }}><TitleWithEmojis text={col.title} /></div>
