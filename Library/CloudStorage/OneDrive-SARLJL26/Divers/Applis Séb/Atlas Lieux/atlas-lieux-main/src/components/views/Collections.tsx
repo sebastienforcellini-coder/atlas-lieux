@@ -7,21 +7,6 @@ import { uploadPhoto } from '@/lib/supabase'
 import { compressImage } from '@/lib/imageUtils'
 import { LieuCard } from './Home'
 
-// Rend le texte en italique mais garde les emojis droits et nets
-function TitleWithEmojis({ text }: { text: string }) {
-  // Découpe en gardant les emojis séparés du texte
-  const parts = text.split(/(\p{Extended_Pictographic}(?:\u200d\p{Extended_Pictographic})*[\uFE0F\u20E3]*)/gu)
-  return (
-    <>
-      {parts.map((part, i) =>
-        /\p{Extended_Pictographic}/u.test(part)
-          ? <span key={i} style={{ fontStyle: 'normal', display: 'inline-block' }}>{part}</span>
-          : <span key={i}>{part}</span>
-      )}
-    </>
-  )
-}
-
 interface Props {
   lieux: Lieu[]
   onNavigate: (v: View, opts?: Record<string, unknown>) => void
@@ -80,35 +65,9 @@ function CollectionForm({ lieux, initial, onSave, onCancel }: {
     l.name.toLowerCase().includes(formSearch.toLowerCase()) ||
     l.city.toLowerCase().includes(formSearch.toLowerCase())
   )
-
-  // Déduire la ville et le pays dominants des lieux déjà sélectionnés
-  const selectedLieux = lieux.filter(l => selected.includes(l.id))
-  const cityCount: Record<string, number> = {}
-  const countryCount: Record<string, number> = {}
-  selectedLieux.forEach(l => {
-    if (l.city) cityCount[l.city] = (cityCount[l.city] || 0) + 1
-    if (l.country) countryCount[l.country] = (countryCount[l.country] || 0) + 1
-  })
-  const dominantCity = Object.entries(cityCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
-  const dominantCountry = Object.entries(countryCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
-
-  // Non sélectionnés en haut : ville dominante d'abord, puis même pays, puis reste — triés alphabétiquement dans chaque groupe
-  const nonSelected = filtered
-    .filter(l => !selected.includes(l.id))
-    .sort((a, b) => {
-      const aCity = a.city === dominantCity ? 0 : a.country === dominantCountry ? 1 : 2
-      const bCity = b.city === dominantCity ? 0 : b.country === dominantCountry ? 1 : 2
-      if (aCity !== bCity) return aCity - bCity
-      // Même groupe → tri alphabétique par ville puis par nom
-      const cityCompare = (a.city ?? '').localeCompare(b.city ?? '')
-      if (cityCompare !== 0) return cityCompare
-      return (a.name ?? '').localeCompare(b.name ?? '')
-    })
-
-  // Sélectionnés en bas
   const sortedLieux = [
-    ...nonSelected,
     ...filtered.filter(l => selected.includes(l.id)),
+    ...filtered.filter(l => !selected.includes(l.id)),
   ]
 
   return (
@@ -283,7 +242,7 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
                       <img src={col.cover_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent, rgba(26,24,20,.6))' }} />
                       <div style={{ position: 'absolute', bottom: 10, left: 14 }}>
-                        <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 17, fontWeight: 300, color: '#fff' }}><TitleWithEmojis text={col.title} /></div>
+                        <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 17, fontWeight: 300, color: '#fff' }}>{col.title}</div>
                         {col.description && <div style={{ fontSize: 11, color: 'rgba(255,255,255,.8)', marginTop: 1 }}>{col.description}</div>}
                       </div>
                     </div>
@@ -292,7 +251,7 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
                     <div style={{ flex: 1 }}>
                       {!col.cover_url && (
                         <>
-                          <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 17, fontWeight: 300 }}><TitleWithEmojis text={col.title} /></div>
+                          <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 17, fontWeight: 300 }}>{col.title}</div>
                           {col.description && <div style={{ fontSize: 12, color: 'var(--soft)', marginTop: 2 }}>{col.description}</div>}
                         </>
                       )}
