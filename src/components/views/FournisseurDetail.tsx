@@ -172,7 +172,7 @@ export default function FournisseurDetail({ fournisseur: initial, onBack }: Prop
             onClick={() => setShowGpsMenu(true)}
             style={{ background: '#e1f5ee', color: '#0f6e56', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, cursor: 'pointer', fontFamily: 'Georgia, serif' }}
           >
-            Y aller
+            📍 {Number(draft.gps_lat).toFixed(5)}, {Number(draft.gps_lng).toFixed(5)} → Navigation
           </button>
         )}
       </div>
