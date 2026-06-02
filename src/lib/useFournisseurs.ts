@@ -23,6 +23,7 @@ function normalize(row: any): Fournisseur {
     instagram: row.instagram ?? null,
     carte_visite_url: row.carte_visite_url ?? null,
     notes: row.notes ?? null,
+    tags: row.tags ?? [],
     created_at: row.created_at,
   };
 }
@@ -74,6 +75,7 @@ export function useFournisseurs() {
       instagram: input.instagram ?? null,
       carte_visite_url: input.carte_visite_url ?? null,
       notes: input.notes ?? null,
+      tags: input.tags ?? [],
     };
     const { data, error } = await supabase
       .from('fournisseurs')
@@ -95,7 +97,7 @@ export function useFournisseurs() {
     for (const k of [
       'name', 'specialite', 'city', 'address', 'gps_lat', 'gps_lng',
       'phone', 'whatsapp', 'email', 'website', 'instagram',
-      'carte_visite_url', 'notes',
+      'carte_visite_url', 'notes', 'tags',
     ] as const) {
       if (k in patch) payload[k] = (patch as any)[k];
     }
