@@ -38,6 +38,9 @@ export default function Sidebar({ current, onNavigate }: Props) {
       <button className={`nav-item${current === 'collections' ? ' on' : ''}`} onClick={() => onNavigate('collections')}>
         <span className="nav-icon">📚</span>Collections
       </button>
+      <button className={`nav-item${current === 'sourcing' ? ' on' : ''}`} onClick={() => onNavigate('sourcing')}>
+        <span className="nav-icon">🛋</span>Sourcing
+      </button>
 
       <div style={{ height: 1, background: 'var(--line)', margin: '12px 20px' }} />
 

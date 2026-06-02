@@ -54,8 +54,7 @@ export interface Comment {
 
 export type LieuInput = Omit<Lieu, 'id' | 'created_at' | 'updated_at'>
 
-export type View = 'home' | 'all' | 'country' | 'city' | 'detail' | 'form' | 'map' | 'geoform' | 'favoris' | 'collections' | 'categories'
-
+export type View = 'home' | 'all' | 'country' | 'city' | 'detail' | 'form' | 'map' | 'geoform' | 'favoris' | 'collections' | 'categories' | 'sourcing' | 'fournisseur'
 export interface NavState {
   view: View
   country?: string
@@ -63,3 +62,42 @@ export interface NavState {
   lieuId?: number
   editLieu?: Partial<Lieu> | null
 }
+// ===== Module Sourcing =====
+
+export interface Fournisseur {
+  id: number
+  slug: string | null
+  name: string
+  specialite: string | null
+  city: string | null
+  address: string | null
+  gps_lat: number | null
+  gps_lng: number | null
+  phone: string | null
+  whatsapp: string | null
+  email: string | null
+  website: string | null
+  instagram: string | null
+  carte_visite_url: string | null
+  notes: string | null
+  created_at?: string
+}
+
+export type FournisseurInput = Omit<Fournisseur, 'id' | 'created_at'>
+
+export interface Trouvaille {
+  id: number
+  slug: string | null
+  fournisseur_id: number
+  photo_url: string | null
+  categorie: string | null
+  description: string | null
+  prix: number | null
+  devise: string | null
+  unite: string | null
+  note: number | null
+  created_at?: string
+  fournisseur?: Fournisseur | null
+}
+
+export type TrouvailleInput = Omit<Trouvaille, 'id' | 'created_at' | 'fournisseur'>

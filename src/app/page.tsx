@@ -12,8 +12,10 @@ import Favoris from '@/components/views/Favoris'
 import Collections from '@/components/views/Collections'
 import CategoriesView from '@/components/views/Categories'
 import MapView from '@/components/views/MapView'
+import Sourcing from '@/components/views/Sourcing'
+import FournisseurDetail from '@/components/views/FournisseurDetail'
 import { ConfirmModal, Toast } from '@/components/UI'
-import type { Lieu, LieuInput, View, NavState } from '@/types'
+import type { Lieu, LieuInput, View, NavState, Fournisseur } from '@/types'
 
 const PIN = '2266'
 
@@ -23,6 +25,8 @@ const VIEW_LABELS: Record<View, string> = {
   detail: 'Fiche lieu', form: 'Nouveau lieu',
   map: 'Carte', geoform: 'Ma position',
   favoris: 'Favoris', collections: 'Collections', categories: 'Catégories',
+  sourcing: 'Sourcing', fournisseur: 'Fournisseur',
+
 }
 
 function PinScreen({ onUnlock }: { onUnlock: () => void }) {
@@ -120,6 +124,7 @@ export default function AtlasPage() {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [unlocked, setUnlocked] = useState<boolean | null>(null)
+  const [fournisseurActif, setFournisseurActif] = useState<Fournisseur | null>(null)
 
   useEffect(() => {
     const ok = localStorage.getItem('atlas_pin') === 'ok'
@@ -210,6 +215,12 @@ export default function AtlasPage() {
           {nav.view === 'map' && <MapView lieux={lieux} onNavigate={navigate} />}
           {nav.view === 'favoris' && <Favoris lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
           {nav.view === 'collections' && <Collections lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
+          {nav.view === 'sourcing' && (
+            <Sourcing onOpenFournisseur={(f) => { setFournisseurActif(f); navigate('fournisseur') }} />
+          )}
+          {nav.view === 'fournisseur' && fournisseurActif && (
+            <FournisseurDetail fournisseur={fournisseurActif} onBack={() => navigate('sourcing')} />
+          )}
           {nav.view === 'geoform' && <GeoForm onNavigate={navigate} />}
           {nav.view === 'country' && nav.country && (
             <CountryView country={nav.country} lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />
