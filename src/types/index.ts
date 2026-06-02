@@ -80,6 +80,7 @@ export interface Fournisseur {
   instagram: string | null
   carte_visite_url: string | null
   notes: string | null
+  tags: string[]
   created_at?: string
 }
 
