@@ -246,7 +246,10 @@ export default function LieuForm({ initial, allLieux, onSave, onCancel }: Props)
               ['Catégorie', 'categorie'], ['GPS', 'gps_lat'],
             ].map(([label, key]) => {
               const imported = key === 'gps_lat'
-                ? (importPreview.gps_lat && importPreview.gps_lng ? importPreview.gps_lat + ', ' + importPreview.gps_lng : null)
+                ? (importPreview.gps_lat && importPreview.gps_lng
+                    ? importPreview.gps_lat + ', ' + importPreview.gps_lng
+                      + (importPreview.gps_precision === 'rue' ? '  (approximatif : position de la rue, à affiner)' : '')
+                    : null)
                 : importPreview[key]
               const current = key === 'gps_lat'
                 ? (form.gps_lat && form.gps_lng ? form.gps_lat + ', ' + form.gps_lng : null)

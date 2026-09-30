@@ -72,25 +72,47 @@ async function getPlacesGps(query: string): Promise<{ lat: string; lng: string }
   }
 }
 
-// Fallback geocoding via Nominatim (OpenStreetMap, gratuit, pas de clé)
-async function geocodeAddress(name: string, city: string, address: string): Promise<{ lat: string; lng: string } | null> {
-  const queries = [
-    `${name}, ${city}`,
-    `${address}, ${city}`,
-    `${name} ${city}`,
-  ].filter(Boolean)
+// Fallback geocoding via Nominatim (OpenStreetMap, gratuit, pas de clé).
+// OSM connaît rarement les commerces marocains par leur nom, mais trouve bien
+// les rues : on tente d'abord le nom, puis chaque morceau de l'adresse.
+// Politique Nominatim : 1 requête/s max et un User-Agent identifiable.
+type Geo = { lat: string; lng: string; precision: 'lieu' | 'rue' }
 
-  for (const q of queries) {
+async function geocodeAddress(name: string, city: string, address: string): Promise<Geo | null> {
+  const shortName = name.split(/\s[-|–·:]\s/)[0].trim()
+  const cleanAddr = address.replace(/\b\d{5}\b/g, '').replace(/\s+,/g, ',').trim()
+  const segments = cleanAddr
+    .split(',')
+    .map(s => s.trim())
+    .filter(s => s && s.toLowerCase() !== city.toLowerCase())
+
+  const candidates: { q: string; precision: Geo['precision'] }[] = []
+  if (shortName && city) candidates.push({ q: `${shortName}, ${city}`, precision: 'lieu' })
+  if (cleanAddr && city) candidates.push({ q: `${cleanAddr}, ${city}`, precision: 'rue' })
+  for (const seg of segments) if (city) candidates.push({ q: `${seg}, ${city}`, precision: 'rue' })
+
+  const seen = new Set<string>()
+  const queue = candidates.filter(c => !seen.has(c.q.toLowerCase()) && seen.add(c.q.toLowerCase())).slice(0, 5)
+
+  for (let i = 0; i < queue.length; i++) {
+    if (i > 0) await new Promise(r => setTimeout(r, 1100))
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,
-        { headers: { 'User-Agent': 'Atlas-Lieux/1.0', 'Accept-Language': 'fr' }, signal: AbortSignal.timeout(4000) }
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queue[i].q)}&format=json&limit=1`,
+        {
+          headers: { 'User-Agent': 'Atlas-Lieux/1.0 (+https://atlas-lieux.vercel.app)', 'Accept-Language': 'fr' },
+          signal: AbortSignal.timeout(4000),
+        }
       )
-      if (!res.ok) continue
+      if (!res.ok) { console.warn('Nominatim', res.status, queue[i].q); continue }
       const data = await res.json()
-      if (data?.[0]?.lat) return { lat: String(data[0].lat), lng: String(data[0].lon) }
+      if (data?.[0]?.lat) {
+        console.log('GPS via Nominatim:', queue[i].q, '→', data[0].lat, data[0].lon)
+        return { lat: String(data[0].lat), lng: String(data[0].lon), precision: queue[i].precision }
+      }
     } catch { continue }
   }
+  console.warn('Nominatim : aucun résultat pour', queue.map(c => c.q))
   return null
 }
 
@@ -150,9 +172,11 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
     }
 
     // GPS depuis l'URL Google Maps (prioritaire absolu)
+    lieu.gps_precision = null
     if (gmapsMatch) {
       lieu.gps_lat = gmapsMatch[1]
       lieu.gps_lng = gmapsMatch[2]
+      lieu.gps_precision = 'exact'
     } else {
       // On ignore le GPS de Gemini (pas fiable) et on utilise Google Places
       lieu.gps_lat = null
@@ -166,6 +190,7 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
       if (coords) {
         lieu.gps_lat = coords.lat
         lieu.gps_lng = coords.lng
+        lieu.gps_precision = 'exact'
       }
     }
 
@@ -175,7 +200,7 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
       if (coords) {
         lieu.gps_lat = coords.lat
         lieu.gps_lng = coords.lng
-        console.log('GPS récupéré via Nominatim:', coords)
+        lieu.gps_precision = coords.precision
       }
     }
 
