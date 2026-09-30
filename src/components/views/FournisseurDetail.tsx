@@ -136,11 +136,6 @@ export default function FournisseurDetail({ fournisseur: initial, onBack }: Prop
 
   return (
     <div style={{ padding: '8px 4px 100px', fontFamily: 'Georgia, serif', maxWidth: 640, margin: '0 auto' }}>
-      {onBack && (
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: BRUN, fontSize: 14, cursor: 'pointer', marginBottom: 8, fontFamily: 'Georgia, serif' }}>
-          {'< Retour'}
-        </button>
-      )}
 
       <input
         value={draft.name}

@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { CATEGORIES_PRODUIT, UNITES_PRIX } from '@/lib/categoriesProduit';
 import { formatPrix } from '@/lib/sourcingShare';
 import type { Trouvaille, Fournisseur } from '@/types';
+import { useHistoryState } from '@/lib/useNavHistory'
 
 const CREME = '#FDFCFA';
 const BEIGE = '#F5F2ED';
@@ -22,8 +23,8 @@ export default function Sourcing({ onOpenFournisseur }: SourcingProps) {
   const { trouvailles, loading, addTrouvaille } = useTrouvailles();
   const { fournisseurs, addFournisseur } = useFournisseurs();
 
-  const [filtre, setFiltre] = useState<string>('Tout');
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [filtre, setFiltre] = useHistoryState<string>('src.filtre', 'Tout');
+  const [expanded, setExpanded] = useHistoryState<Record<string, boolean>>('src.expanded', {});
   const [showForm, setShowForm] = useState(false);
   const [zoom, setZoom] = useState<Trouvaille | null>(null);
 

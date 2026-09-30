@@ -4,6 +4,7 @@ import type { Lieu, View } from '@/types'
 import { useCategories } from '@/lib/useCategories'
 import { uniq } from '@/components/UI'
 import { LieuCard } from './Home'
+import { useHistoryState } from '@/lib/useNavHistory'
 
 interface Props {
   lieux: Lieu[]
@@ -12,13 +13,13 @@ interface Props {
 }
 
 export default function AllLieux({ lieux, onNavigate, onDelete }: Props) {
-  const [q, setQ] = useState('')
-  const [catFilter, setCatFilter] = useState('')
-  const [favoriOnly, setFavoriOnly] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
-  const [minRating, setMinRating] = useState(0)
-  const [tagFilter, setTagFilter] = useState('')
-  const [countryFilter, setCountryFilter] = useState('')
+  const [q, setQ] = useHistoryState('all.q', '')
+  const [catFilter, setCatFilter] = useHistoryState('all.cat', '')
+  const [favoriOnly, setFavoriOnly] = useHistoryState('all.fav', false)
+  const [showFilters, setShowFilters] = useHistoryState('all.showFilters', false)
+  const [minRating, setMinRating] = useHistoryState('all.rating', 0)
+  const [tagFilter, setTagFilter] = useHistoryState('all.tag', '')
+  const [countryFilter, setCountryFilter] = useHistoryState('all.country', '')
 
   const { categories } = useCategories()
 
@@ -173,4 +174,4 @@ export default function AllLieux({ lieux, onNavigate, onDelete }: Props) {
       }
     </div>
   )
-}
+}

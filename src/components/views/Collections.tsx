@@ -6,6 +6,7 @@ import { useCategories } from '@/lib/useCategories'
 import { uploadPhoto } from '@/lib/supabase'
 import { compressImage } from '@/lib/imageUtils'
 import { LieuCard } from './Home'
+import { useHistoryState } from '@/lib/useNavHistory'
 
 // Rend le texte en italique mais garde les emojis droits et nets
 function TitleWithEmojis({ text }: { text: string }) {
@@ -195,10 +196,10 @@ export default function Collections({ lieux, onNavigate, onDelete }: Props) {
   const { categories } = useCategories()
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Collection | null>(null)
-  const [open, setOpen] = useState<number | null>(null)
+  const [open, setOpen] = useHistoryState<number | null>('col.open', null)
   const [copied, setCopied] = useState<number | null>(null)
-  const [filterCat, setFilterCat] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
+  const [filterCat, setFilterCat] = useHistoryState<string | null>('col.cat', null)
+  const [search, setSearch] = useHistoryState('col.q', '')
 
   const handleCreate = async (title: string, desc: string, ids: number[], cover_url?: string | null) => {
     await addCollection(title, desc, ids, cover_url)

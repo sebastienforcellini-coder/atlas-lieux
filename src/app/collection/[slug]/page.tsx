@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: col.title + ' — Atlas',
       description: col.description || col.title + ' · ' + col.lieux_ids.length + ' lieux',
       siteName: 'Atlas — Répertoire de lieux',
-      images: [{ url: 'https://atlas-lieux.vercel.app/og-logo.png', width: 512, height: 512, alt: 'Atlas' }],
+      images: [{ url: col.cover_url || 'https://atlas-lieux.vercel.app/og-logo.png', width: 1200, height: 630, alt: col.title }],
     },
   }
 }
@@ -151,19 +151,25 @@ export default async function CollectionPage({ params, searchParams }: Props) {
     <div style={{ minHeight: '100vh', background: '#F5F2ED', fontFamily: 'Georgia, serif' }}>
       <div style={{ maxWidth: 640, margin: '0 auto', padding: '2rem 1.25rem 4rem' }}>
 
-        {/* Header */}
-        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(26,24,20,.08)', boxShadow: '0 2px 16px rgba(26,24,20,.06)', overflow: 'hidden', marginBottom: 24 }}>
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(26,24,20,.08)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 15, color: '#1A1814', fontWeight: 300 }}>Atlas</span>
-            <div style={{ width: 1, height: 14, background: 'rgba(26,24,20,.15)' }} />
-            <span style={{ fontSize: 11, color: '#B0AA9E', fontFamily: 'system-ui, sans-serif', letterSpacing: 1 }}>Collection</span>
-          </div>
-          <div style={{ padding: '24px 20px', textAlign: 'center' }}>
-            <div style={{ fontSize: 30, fontStyle: 'italic', fontWeight: 300, lineHeight: 1.2, color: '#1A1814', marginBottom: 8 }}>{col.title}</div>
-            {col.description && <p style={{ fontSize: 14, color: '#6B6560', margin: '0 0 10px', lineHeight: 1.6 }}>{col.description}</p>}
-            <div style={{ fontSize: 11, color: '#B0AA9E', fontFamily: 'system-ui, sans-serif' }}>{allLieux.length} lieu{allLieux.length !== 1 ? 'x' : ''}</div>
-          </div>
-        </div>
+       {/* Header */}
+<div style={{ position: 'relative', background: '#fff', borderRadius: 16, border: '1px solid rgba(26,24,20,.08)', boxShadow: '0 2px 16px rgba(26,24,20,.06)', overflow: 'hidden', marginBottom: 24, minHeight: col.cover_url ? 320 : 180 }}>
+  {col.cover_url && (
+    <>
+      <img src={col.cover_url} alt={col.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7 }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,24,20,.75), rgba(26,24,20,.1) 60%, transparent)' }} />
+    </>
+  )}
+  <div style={{ position: 'relative', padding: '14px 20px', borderBottom: col.cover_url ? 'none' : '1px solid rgba(26,24,20,.08)', display: 'flex', alignItems: 'center', gap: 8 }}>
+    <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 15, color: col.cover_url ? '#fff' : '#1A1814', fontWeight: 300 }}>Atlas</span>
+    <div style={{ width: 1, height: 14, background: col.cover_url ? 'rgba(255,255,255,.4)' : 'rgba(26,24,20,.15)' }} />
+    <span style={{ fontSize: 11, color: col.cover_url ? 'rgba(255,255,255,.85)' : '#B0AA9E', fontFamily: 'system-ui, sans-serif', letterSpacing: 1 }}>Collection</span>
+  </div>
+  <div style={{ position: 'relative', padding: '24px 20px', textAlign: 'center', ...(col.cover_url ? { position: 'absolute', bottom: 0, left: 0, right: 0 } : {}) }}>
+    <div style={{ fontSize: 30, fontStyle: 'italic', fontWeight: 300, lineHeight: 1.2, color: col.cover_url ? '#fff' : '#1A1814', marginBottom: 8 }}>{col.title}</div>
+    {col.description && <p style={{ fontSize: 14, color: col.cover_url ? 'rgba(255,255,255,.9)' : '#6B6560', margin: '0 0 10px', lineHeight: 1.6 }}>{col.description}</p>}
+    <div style={{ fontSize: 11, color: col.cover_url ? 'rgba(255,255,255,.8)' : '#B0AA9E', fontFamily: 'system-ui, sans-serif' }}>{allLieux.length} lieu{allLieux.length !== 1 ? 'x' : ''}</div>
+  </div>
+</div>
 
         {/* Filtres */}
         {catsPresentes.length > 1 && (

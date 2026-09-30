@@ -61,6 +61,7 @@ export interface NavState {
   city?: string
   lieuId?: number
   editLieu?: Partial<Lieu> | null
+  fournisseur?: Fournisseur
 }
 // ===== Module Sourcing =====
 

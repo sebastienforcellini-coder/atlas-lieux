@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { parseLlmJson } from '@/lib/parseLlmJson'
+
+// Gemini + recherche web + géocodage peuvent dépasser 10 s
+export const maxDuration = 60
 
 function extractSearchQuery(url: string, query: string | undefined): string {
   if (query) return query
@@ -99,6 +103,7 @@ export async function POST(req: NextRequest) {
   const pageContent = isWebsite ? await fetchPageContent(url) : ''
 
   const prompt = `Reponds UNIQUEMENT avec un objet JSON valide. Aucun texte avant ou après. Aucun markdown. Aucun backtick.
+N'utilise JAMAIS de guillemets doubles à l'intérieur d'une valeur texte : pour citer un nom ou une expression, utilise les guillemets français « ».
 
 Lieu : "${searchQuery}"
 Recherche activement le numéro de téléphone, WhatsApp et le site web officiel de ce lieu.${gmapsMatch ? `GPS : lat=${gmapsMatch[1]}, lng=${gmapsMatch[2]}` : ''}
@@ -136,20 +141,13 @@ Extrais toutes les informations disponibles et réponds avec ce JSON :
 
     console.log('Gemini raw response:', text.slice(0, 1500))
 
-    // Parsing robuste
-    let lieu = null
-    const cleaned = text
-      .replace(/```json\s*/gi, '')
-      .replace(/```\s*/gi, '')
-      .trim()
-    const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
-    if (jsonMatch) {
-      try { lieu = JSON.parse(jsonMatch[0]) } catch {}
-    }
+    // Parsing tolérant (guillemets non échappés, texte autour, virgule en trop)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const lieu = parseLlmJson<any>(text)
     if (!lieu) {
-      try { lieu = JSON.parse(cleaned) } catch {}
+      const reason = data.candidates?.[0]?.finishReason
+      throw new Error(`JSON Gemini illisible (finishReason=${reason}) : ${text.slice(0, 300)}`)
     }
-    if (!lieu) throw new Error('Aucun JSON dans la réponse Gemini')
 
     // GPS depuis l'URL Google Maps (prioritaire absolu)
     if (gmapsMatch) {

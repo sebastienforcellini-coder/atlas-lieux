@@ -324,7 +324,17 @@ input, select, textarea, button { font-family: inherit; }
   text-transform: uppercase; padding: 14px 20px 4px;
 }
 
+/* Bouton retour (desktop ; sur mobile il est dans la barre du haut) */
+.back-link {
+  background: none; border: none; padding: 4px 0; margin: -8px 0 14px;
+  color: var(--accent); font-family: Georgia, serif; font-style: italic;
+  font-size: 14px; cursor: pointer;
+}
+.back-link:hover { text-decoration: underline; }
+.back-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
 @media (max-width: 768px) {
+  .desktop-only { display: none !important; }
   .mobile-topbar { display: flex; }
   .desktop-sidebar { display: none !important; }
   main { padding: 68px 16px 24px !important; }

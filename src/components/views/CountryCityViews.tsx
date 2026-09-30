@@ -4,6 +4,7 @@ import type { Lieu, View } from '@/types'
 import { useCategories } from '@/lib/useCategories'
 import { uniq, plural } from '@/components/UI'
 import { LieuCard } from './Home'
+import { useHistoryState } from '@/lib/useNavHistory'
 
 interface CountryProps {
   country: string
@@ -58,8 +59,8 @@ interface CityProps {
 export function CityView({ country, city, lieux, onNavigate, onDelete }: CityProps) {
   const { categories } = useCategories()
   const filtered = lieux.filter(l => l.country === country && l.city === city)
-  const [activeCat, setActiveCat] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
+  const [activeCat, setActiveCat] = useHistoryState<string | null>('city.cat', null)
+  const [search, setSearch] = useHistoryState('city.q', '')
 
   // Catégories présentes dans cette ville uniquement
   const catsPresentes = categories.filter(c => filtered.some(l => l.categorie === c.id))

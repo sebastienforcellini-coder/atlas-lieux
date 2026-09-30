@@ -3,6 +3,7 @@ import type { Lieu, View } from '@/types'
 import { useState } from 'react'
 import { uniq, plural, Stars, TagsDisplay } from '@/components/UI'
 import { useCategories } from '@/lib/useCategories'
+import { useHistoryState } from '@/lib/useNavHistory'
 
 interface Props {
   lieux: Lieu[]
@@ -11,7 +12,7 @@ interface Props {
 }
 
 export default function Home({ lieux, onNavigate, onDelete }: Props) {
-  const [tab, setTab] = useState<'pays' | 'villes' | 'recent'>('pays')
+  const [tab, setTab] = useHistoryState<'pays' | 'villes' | 'recent'>('home.tab', 'pays')
   const [showPosMenu, setShowPosMenu] = useState(false)
   const [locating, setLocating] = useState(false)
 

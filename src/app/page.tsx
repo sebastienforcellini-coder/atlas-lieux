@@ -1,5 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useNavHistory, HOME } from '@/lib/useNavHistory'
 import { useLieux } from '@/lib/useLieux'
 import Sidebar, { Logo } from '@/components/Sidebar'
 import Home from '@/components/views/Home'
@@ -15,7 +16,7 @@ import MapView from '@/components/views/MapView'
 import Sourcing from '@/components/views/Sourcing'
 import FournisseurDetail from '@/components/views/FournisseurDetail'
 import { ConfirmModal, Toast } from '@/components/UI'
-import type { Lieu, LieuInput, View, NavState, Fournisseur } from '@/types'
+import type { Lieu, LieuInput, View } from '@/types'
 
 const PIN = '2266'
 
@@ -119,12 +120,12 @@ function PinScreen({ onUnlock }: { onUnlock: () => void }) {
 
 export default function AtlasPage() {
   const { lieux, loading, addLieu, updateLieu, deleteLieu } = useLieux()
-  const [nav, setNav] = useState<NavState>({ view: 'home' })
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [unlocked, setUnlocked] = useState<boolean | null>(null)
-  const [fournisseurActif, setFournisseurActif] = useState<Fournisseur | null>(null)
+  const mainRef = useRef<HTMLElement>(null)
+  const { nav, depth, navigate: navTo, goBack } = useNavHistory(mainRef, !!unlocked && !loading)
 
   useEffect(() => {
     const ok = localStorage.getItem('atlas_pin') === 'ok'
@@ -136,9 +137,14 @@ export default function AtlasPage() {
   }, [toast])
 
   const navigate = (view: View, opts?: Record<string, unknown>) => {
-    setNav({ view, ...opts } as NavState)
+    navTo(view, opts)
     setMenuOpen(false)
   }
+
+  // Le menu mobile se referme aussi quand on revient en arrière
+  useEffect(() => { setMenuOpen(false) }, [nav])
+
+  const canGoBack = depth > 0 && nav.view !== 'home'
 
   const showToast = (msg: string) => setToast(msg)
 
@@ -146,12 +152,14 @@ export default function AtlasPage() {
     if (id) {
       await updateLieu(id, data)
       showToast('Lieu mis à jour !')
-      navigate('detail', { lieuId: id })
+      // Retour à la fiche d'où vient la modification (sans empiler le formulaire)
+      goBack({ view: 'detail', lieuId: id })
     } else {
       const newId = await addLieu(data)
       showToast('Lieu créé !')
-      if (newId) navigate('detail', { lieuId: newId })
-      else navigate('home')
+      // Le formulaire est remplacé par la fiche : "Retour" ramène là où on a cliqué "Ajouter"
+      if (newId) navTo('detail', { lieuId: newId }, 'replace')
+      else goBack()
     }
   }
 
@@ -162,10 +170,11 @@ export default function AtlasPage() {
     await deleteLieu(confirmDelete)
     setConfirmDelete(null)
     showToast('Lieu supprimé.')
-    if (nav.view === 'detail' && nav.lieuId === confirmDelete) navigate('home')
+    if (nav.view === 'detail' && nav.lieuId === confirmDelete) goBack()
   }
 
   const currentLieu = nav.lieuId ? lieux.find(l => l.id === nav.lieuId) : null
+  const navKey = JSON.stringify(nav)
 
   // Chargement initial
   if (unlocked === null) return <div className="loading-screen">CHARGEMENT...</div>
@@ -189,14 +198,20 @@ export default function AtlasPage() {
       )}
 
       <div className="mobile-topbar">
-        <button onClick={() => setMenuOpen(true)}
-          style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 8, color: 'var(--mid)', padding: '8px 12px', cursor: 'pointer', fontSize: 18, lineHeight: 1, minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>☰</button>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={() => setMenuOpen(true)} aria-label="Menu"
+            style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 8, color: 'var(--mid)', padding: '8px 12px', cursor: 'pointer', fontSize: 18, lineHeight: 1, minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>☰</button>
+          {canGoBack && (
+            <button onClick={() => goBack()} aria-label="Retour" title="Retour"
+              style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 8, color: 'var(--accent)', cursor: 'pointer', fontSize: 22, lineHeight: 1, minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: 3 }}>‹</button>
+          )}
+        </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontFamily: 'Georgia, serif', fontSize: 15, fontStyle: 'italic', color: 'var(--text)', lineHeight: 1.1 }}>Atlas</div>
           <div style={{ height: '0.5px', background: 'var(--accent)', margin: '2px 6px', opacity: 0.7 }} />
           <div style={{ fontFamily: 'Georgia, serif', fontSize: 7, color: 'var(--accent)', letterSpacing: 2 }}>RÉPERTOIRE DE LIEUX</div>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--soft)' }}>{VIEW_LABELS[nav.view]}</div>
+        <div style={{ flex: 1, textAlign: 'right', fontSize: 11, color: 'var(--soft)' }}>{VIEW_LABELS[nav.view]}</div>
       </div>
 
       <div className={`mobile-nav-overlay${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)} />
@@ -209,17 +224,21 @@ export default function AtlasPage() {
           <Sidebar current={nav.view} onNavigate={navigate} />
         </div>
 
-        <main style={{ flex: 1, overflowY: 'auto', padding: '28px 32px' }}>
+        <main ref={mainRef} style={{ flex: 1, overflowY: 'auto', padding: '28px 32px' }}>
+          {canGoBack && (
+            <button className="back-link desktop-only" onClick={() => goBack()}>‹ Retour</button>
+          )}
+          <div key={navKey}>
           {nav.view === 'home' && <Home lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
           {nav.view === 'all' && <AllLieux lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
           {nav.view === 'map' && <MapView lieux={lieux} onNavigate={navigate} />}
           {nav.view === 'favoris' && <Favoris lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
           {nav.view === 'collections' && <Collections lieux={lieux} onNavigate={navigate} onDelete={handleDelete} />}
           {nav.view === 'sourcing' && (
-            <Sourcing onOpenFournisseur={(f) => { setFournisseurActif(f); navigate('fournisseur') }} />
+            <Sourcing onOpenFournisseur={(f) => navigate('fournisseur', { fournisseur: f })} />
           )}
-          {nav.view === 'fournisseur' && fournisseurActif && (
-            <FournisseurDetail fournisseur={fournisseurActif} onBack={() => navigate('sourcing')} />
+          {nav.view === 'fournisseur' && nav.fournisseur && (
+            <FournisseurDetail fournisseur={nav.fournisseur} onBack={() => goBack({ view: 'sourcing' })} />
           )}
           {nav.view === 'geoform' && <GeoForm onNavigate={navigate} />}
           {nav.view === 'country' && nav.country && (
@@ -233,13 +252,20 @@ export default function AtlasPage() {
               onUpdate={async (id, data) => { await updateLieu(id, data as LieuInput) }}
               onDelete={handleDelete} onShare={showToast} />
           )}
+          {nav.view === 'detail' && !currentLieu && (
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--soft)', fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>
+              Ce lieu n&apos;existe plus.
+              <div style={{ marginTop: 16 }}><button className="btn" onClick={() => goBack()}>‹ Retour</button></div>
+            </div>
+          )}
           {nav.view === 'categories' && <CategoriesView onNavigate={navigate} />}
           {nav.view === 'form' && (
             <LieuForm initial={nav.editLieu ?? null} allLieux={lieux} onSave={handleSave}
-              onCancel={() => nav.editLieu && 'id' in nav.editLieu
-                ? navigate('detail', { lieuId: (nav.editLieu as Lieu).id })
-                : navigate('home')} />
+              onCancel={() => goBack(nav.editLieu && 'id' in nav.editLieu
+                ? { view: 'detail', lieuId: (nav.editLieu as Lieu).id }
+                : HOME)} />
           )}
+          </div>
         </main>
       </div>
     </>
